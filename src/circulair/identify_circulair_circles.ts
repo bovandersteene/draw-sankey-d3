@@ -1,5 +1,17 @@
-export function identifyCircles(inputGraph) {
-  let graph = clone(inputGraph);
+// Populate the sourceLinks and targetLinks for each node.
+
+import { Graph, GraphData } from "./model";
+import { cloneDeep } from "lodash";
+import * as d3 from "d3";
+import { _typeof, find } from "./utils";
+
+import findCircuits from "elementary-circuits-directed-graph";
+
+export const identifyCircles = <TYPE>(
+  inputGraph: GraphData,
+  { sortNodes }: Pick<Graph<TYPE>, "sortNodes">
+): GraphData => {
+  let graph = cloneDeep(inputGraph);
 
   var circularLinkID = 0;
   if (sortNodes === null || sortNodes(graph.nodes[0]) === undefined) {
@@ -61,4 +73,4 @@ export function identifyCircles(inputGraph) {
   }
 
   return graph;
-}
+};

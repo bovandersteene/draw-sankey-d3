@@ -1,26 +1,27 @@
-// Compute the value (size) and cycleness of each node by summing the associated links.
-function computeNodeValues(inputGraph) {
-  let graph = clone(inputGraph);
+import { clone, sumBy } from "lodash";
+import { GraphData, Graph, Link } from "./model";
+import * as d3 from "d3";
 
-  graph.nodes.forEach(function(node) {
-    node.partOfCycle = false;
-    node.value = Math.max(
-      d3.sum(node.sourceLinks, value),
-      d3.sum(node.targetLinks, value)
+// Compute the value (size) and cycleness of each node by summing the associated links.
+export const computeNodeValues = (inputGraph: GraphData) => {
+  const nodes = inputGraph.nodes.map((node) => {
+    const value = Math.max(
+      sumBy(node.sourceLinks, (n: Link) => n.value ?? 0),
+      sumBy(node.targetLinks, (n: Link) => n.value ?? 0)
     );
-    node.sourceLinks.forEach(function(link) {
-      if (link.circular) {
-        node.partOfCycle = true;
-        node.circularLinkType = link.circularLinkType;
-      }
-    });
-    node.targetLinks.forEach(function(link) {
-      if (link.circular) {
-        node.partOfCycle = true;
-        node.circularLinkType = link.circularLinkType;
-      }
-    });
+
+    let findCirculair = node.sourceLinks.find((l) => l.circular);
+    if (!findCirculair) {
+      findCirculair = node.targetLinks.find((l) => l.circular);
+    }
+
+    return {
+      ...node,
+      value,
+      partOfCycle: !!findCirculair,
+      circularLinkType: findCirculair?.circularLinkType,
+    };
   });
 
-  return graph;
-}
+  return { ...inputGraph, nodes };
+};

@@ -1,33 +1,47 @@
 // Populate the sourceLinks and targetLinks for each node.
-// Also, if the source and target are not objects, assume they are indices.
-function computeNodeLinks(inputGraph) {
-  let graph = clone(inputGraph);
 
-  graph.nodes.forEach(function(node, i) {
-    node.index = i;
-    node.sourceLinks = [];
-    node.targetLinks = [];
-  });
-  var nodeById = d3.map(graph.nodes, id);
-  graph.links.forEach(function(link, i) {
+import { Graph, GraphData, Link } from "./model";
+import { cloneDeep, groupBy } from "lodash";
+import * as d3 from "d3";
+import { _typeof, findNode } from "./utils";
+
+// Also, if the source and target are not objects, assume they are indices.
+export const computeNodeLinks = (
+  inputGraph: Readonly<GraphData>,
+  { getNodeID }: Pick<Graph, "getNodeID">
+): GraphData => {
+  //let graph = cloneDeep(inputGraph);
+
+  const nodes = inputGraph.nodes.map((node, index) => ({
+    ...node,
+    index,
+    sourceLinks: [],
+    targetLinks: [],
+  }));
+
+  const nodeById = groupBy(nodes, getNodeID);
+
+  const links: Link[] = inputGraph.links.map((link, i) => {
     link.index = i;
-    var source = link.source;
-    var target = link.target;
+    let source = link.source;
+    let target = link.target;
     if (
       (typeof source === "undefined" ? "undefined" : _typeof(source)) !==
-      'object'
+      "object"
     ) {
-      source = link.source = find(nodeById, source);
+      source = link.source = findNode(nodeById, source);
     }
     if (
       (typeof target === "undefined" ? "undefined" : _typeof(target)) !==
-      'object'
+      "object"
     ) {
-      target = link.target = find(nodeById, target);
+      target = link.target = findNode(nodeById, target);
     }
     source.sourceLinks.push(link);
     target.targetLinks.push(link);
-  });
-  return graph;
-}
 
+    return link;
+  });
+
+  return { ...inputGraph, nodes, links };
+};
