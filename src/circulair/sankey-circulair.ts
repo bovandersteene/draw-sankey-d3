@@ -19,6 +19,10 @@ import { adjustSankeySize } from "./adjust_sankey_size";
 import { computeNodeBreadths } from "./compute_node_breaths";
 import { createVirtualNodes } from "./create_virtual_nodes";
 import { pick } from "lodash";
+import { resolveCollisionsAndRelax } from "./resolve-collision";
+import { computeColumns } from "./compute_columns";
+
+/** Inspired on https://observablehq.com/@tomshanley/sankey-circular-deconstructed */
 
 type Setup<NODE_TYPE extends Node, LINK_TYPE extends Link> = Partial<
   Omit<Graph<NODE_TYPE, LINK_TYPE>, "graph">
@@ -55,21 +59,16 @@ class GraphSetup<NODE_TYPE extends Node = Node, LINK_TYPE extends Link = Link>
   }
 
   draw(data: SankeyData) {
-    this.graph = data as GraphData;
+    (this.graph = data as GraphData), this;
     this.graph = computeNodeLinks(this.graph, this);
     this.graph = identifyCircles(this.graph, this);
-    this.graph = selectCircularLinkTypes(this.graph, this);
     this.graph = computeNodeValues(this.graph);
     this.graph = computeNodeDepths(this.graph, this);
     this.graph = createVirtualNodes(this.graph, this);
-    console.table(pick(this.graph, ["x0", "y0", "x1", "y1", "py", "ky"]));
+    this.graph = selectCircularLinkTypes(this.graph, this);
     this.graph = adjustSankeySize(this.graph, this);
-    console.table(pick(this.graph, ["x0", "y0", "x1", "y1", "py", "ky"]));
     this.graph = computeNodeBreadths(this.graph, this);
-    console.table(pick(this.graph, ["x0", "y0", "x1", "y1", "py", "ky"]));
-    this.graph.nodes.forEach((node: any) => {
-      console.log(node.name, node.x0, node.y0);
-    });
+    // this.graph = resolveCollisionsAndRelax(this.graph, this);
     return this;
   }
 }

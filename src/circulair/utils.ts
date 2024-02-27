@@ -34,7 +34,6 @@ export function numberOfNonSelfLinkingCycles(
   function countNonSelfLinkingCycles(links: Link[]): number {
     return links.reduce((result: number, link: Link) => {
       if (!link.circular || selfLinking(link, getNodeID)) return result;
-      console.log("+1");
       return result + 1;
     }, 0);
   }
@@ -59,3 +58,19 @@ export const findNode = (nodeById: Record<string, any>, id: string) => {
   if (!node) throw new Error("missing: " + id);
   return node;
 };
+
+export function ascendingBreadth(a: Node, b: Node) {
+  if (a.partOfCycle === b.partOfCycle) {
+    return a.y0 - b.y0;
+  } else {
+    if (a.circularLinkType === "top" || b.circularLinkType === "bottom") {
+      return -1;
+    } else {
+      return 1;
+    }
+  }
+}
+
+export function nodeCenter(node: Node) {
+  return (node.y0 + node.y1) / 2;
+}

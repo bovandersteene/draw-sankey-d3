@@ -34,6 +34,9 @@ export type SankeyParams = {
   baseRadius: number;
   nodeWidth: number;
   scale: number;
+  iterations: number;
+  minNodePadding: number;
+  virtualNodePadding: number;
 };
 
 export type CircularLinkType = "top" | "bottom";
@@ -89,7 +92,9 @@ export const DefaultGraph: Graph<any, Link> = {
   height: 500,
   graph: undefined,
   useVirtualRoutes: false,
-  nodeColor: d3.scaleSequential(d3.interpolateCool).domain([0, 1000]),
+  nodeColor: (d: any, index) => {
+    return d3.scaleSequential(d3.interpolateCool).domain([0, 1000])(d.x0);
+  },
   getNodeID: (d: any) => d.name,
   sortNodes: null,
   sankey: {
@@ -105,5 +110,8 @@ export const DefaultGraph: Graph<any, Link> = {
     baseRadius: 10,
     nodeWidth: 10,
     scale: 0.3,
+    iterations: 10,
+    minNodePadding: 7,
+    virtualNodePadding: 3,
   },
 };

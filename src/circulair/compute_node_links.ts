@@ -1,8 +1,7 @@
 // Populate the sourceLinks and targetLinks for each node.
 
 import { Graph, GraphData, Link } from "./model";
-import { cloneDeep, groupBy } from "lodash";
-import * as d3 from "d3";
+import { groupBy } from "lodash";
 import { _typeof, findNode } from "./utils";
 
 // Also, if the source and target are not objects, assume they are indices.

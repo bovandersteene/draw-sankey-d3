@@ -117,10 +117,10 @@ export const drawSankey = <NODE_TYPE extends Node, LINK_TYPE extends Link>(
       return d.x0;
     })
     .attr("y", function (d) {
+      console.log(d.name, d.height, d.y1, d.y0);
       return d.y0;
     })
     .attr("height", function (d) {
-      console.log(d.height, d.y1 - d.y0);
       return d.y1 - d.y0;
     })
     .attr("width", function (d) {

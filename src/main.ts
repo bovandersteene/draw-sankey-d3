@@ -6,6 +6,8 @@ import { drawSankey } from "./draw-sankey";
 import { sankeyCircular } from "./sankey-circulair";
 import { drawSankeyCirculair } from "./circulair/sankey-circulair";
 
+/** Inspired on https://observablehq.com/@tomshanley/sankey-circular-deconstructed */
+
 // drawSankey("#chart", data2);
 drawSankeyCirculair("chart2", data2);
 // drawSankey('#chart2', data);

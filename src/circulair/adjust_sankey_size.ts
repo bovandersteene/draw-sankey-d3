@@ -1,9 +1,9 @@
-import { cloneDeep, min, minBy, pick, snakeCase, sumBy } from "lodash";
+import { sumBy } from "lodash";
 import { Graph, GraphData, Link, Node, SankeyParams } from "./model";
 
 import * as d3 from "d3";
-import { nest } from "d3-collection";
 import { getColumn, getWidth } from "./utils";
+import { computeColumns } from "./compute_columns";
 
 type GraphDimensions = Pick<GraphData, "x0" | "x1" | "y1" | "y0"> & {
   scaleX: number;
@@ -114,11 +114,7 @@ export const adjustSankeySize = (
   //  let graph = cloneDeep(inputGraph);
   let py = inputGraph.py ?? 0;
 
-  const columns = nest()
-    .key(getColumn)
-    .sortKeys(d3.ascending)
-    .entries(inputGraph.nodes)
-    .map((d: Node) => d.values);
+  const columns = computeColumns(inputGraph);
   const maxColumn = d3.max(inputGraph.nodes, getColumn) ?? 1;
 
   //override py if nodePadding has been set
@@ -143,11 +139,8 @@ export const adjustSankeySize = (
     calculateNodeSize(graphDimensions, node, sankey, maxColumn)
   );
 
-  console.log(ky, graphDimensions.scaleY);
   //re-calculate widths
   ky = ky * graphDimensions.scaleY;
-
-  console.log(ky, graphDimensions.scaleY);
 
   const links = inputGraph.links.map((link) => {
     return { ...link, width: getWidth(link, ky) };

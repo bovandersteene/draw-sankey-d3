@@ -1,9 +1,6 @@
-import * as d3 from "d3";
-import { cloneDeep, pick } from "lodash";
-import { GraphData, Graph, Link, Node, SankeyParams } from "./model";
-import { getColumn, numberOfNonSelfLinkingCycles } from "./utils";
-
-import { nest } from "d3-collection";
+import { computeColumns } from "./compute_columns";
+import { GraphData, Graph, Link, Node } from "./model";
+import { numberOfNonSelfLinkingCycles } from "./utils";
 
 const calculateNodeSize = (
   node: Node,
@@ -51,16 +48,6 @@ const calculateNodeSize = (
     // // }
   }
 
-  console.log(
-    i,
-    (node as any).name,
-    selfLinkingCycles,
-    node.depth,
-    columnsLength,
-    node.y0,
-    node.y1,
-    node.y1 - node.y0
-  );
   return { ...node, height: node.y1 - node.y0 };
 };
 
@@ -70,11 +57,7 @@ export const computeNodeBreadths = (
   settings: Pick<Graph<Node, Link>, "getNodeID" | "setNodePositions">
 ) => {
   const { getNodeID, setNodePositions } = settings;
-  const columns = nest()
-    .key(getColumn)
-    .sortKeys(d3.ascending)
-    .entries(inputGraph.nodes)
-    .map((d) => d.values);
+  const columns = computeColumns(inputGraph);
 
   const columnsLength = columns.length;
 
