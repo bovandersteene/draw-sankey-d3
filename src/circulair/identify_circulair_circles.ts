@@ -2,25 +2,25 @@
 
 import { Graph, GraphData } from "./model";
 import { cloneDeep } from "lodash";
-import * as d3 from "d3";
-import { _typeof, find } from "./utils";
+import { _typeof } from "./utils";
 
 import findCircuits from "elementary-circuits-directed-graph";
 
-export const identifyCircles = <TYPE>(
+export const identifyCircles = (
   inputGraph: GraphData,
-  { sortNodes }: Pick<Graph<TYPE>, "sortNodes">
+  { sortNodes, getNodeID }: Pick<Graph, "sortNodes" | "getNodeID">
 ): GraphData => {
   let graph = cloneDeep(inputGraph);
 
   var circularLinkID = 0;
   if (sortNodes === null || sortNodes(graph.nodes[0]) === undefined) {
     // Building adjacency graph
-    var adjList = [];
+    const adjList: number[][] = [];
     for (var i = 0; i < graph.links.length; i++) {
-      var link = graph.links[i];
-      var source = link.source.index;
-      var target = link.target.index;
+      const link = graph.links[i];
+      const source = link.sourceIndex;
+      const target = link.targetIndex;
+
       if (!adjList[source]) adjList[source] = [];
       if (!adjList[target]) adjList[target] = [];
 
@@ -29,24 +29,24 @@ export const identifyCircles = <TYPE>(
     }
 
     // Find all elementary circuits
-    var cycles = findCircuits(adjList);
+    const cycles = findCircuits(adjList);
 
     // Sort by circuits length
     cycles.sort(function (a, b) {
       return a.length - b.length;
     });
 
-    var circularLinks = {};
+    const circularLinks = {};
     for (i = 0; i < cycles.length; i++) {
-      var cycle = cycles[i];
-      var last = cycle.slice(-2);
+      const cycle = cycles[i];
+      const last = cycle.slice(-2);
       if (!circularLinks[last[0]]) circularLinks[last[0]] = {};
       circularLinks[last[0]][last[1]] = true;
     }
 
-    graph.links.forEach(function (link) {
-      var target = link.target.index;
-      var source = link.source.index;
+    graph.links.forEach((link) => {
+      const source = link.sourceIndex;
+      const target = link.targetIndex;
       // If self-linking or a back-edge
       if (
         target === source ||

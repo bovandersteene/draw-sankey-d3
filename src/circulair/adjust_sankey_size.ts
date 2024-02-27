@@ -18,8 +18,6 @@ const getKy = (columns: any, py: number, sankey: SankeyParams) => {
       sumBy(nodes, (d) => d.value)
   );
   const minValue = Math.min(...values);
-  console.log(values, sankey.scale);
-  console.log(minValue, sankey.scale);
 
   return minValue * sankey.scale;
 };
@@ -102,9 +100,9 @@ const calculateNodeSize = <NODE_TYPE extends Node>(
   const column = getColumn(node) ?? 0;
   const mCol = maxColumn ?? 1;
   const nodeX0 = x0 + column * ((x1 - x0 - nodeWidth) / mCol);
-  const nodeX1 = x0 + nodeWidth;
+  const nodeX1 = nodeX0 + (nodeWidth ?? 10);
 
-  return { ...node, x0: nodeX0, nodeX1, width: nodeWidth };
+  return { ...node, x0: nodeX0, x1: nodeX1, width: nodeWidth };
 };
 
 export const adjustSankeySize = (

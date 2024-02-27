@@ -21,6 +21,8 @@ import { createVirtualNodes } from "./create_virtual_nodes";
 import { pick } from "lodash";
 import { resolveCollisionsAndRelax } from "./resolve-collision";
 import { computeColumns } from "./compute_columns";
+import { computeLinkBreadths } from "./compute_link_breaths";
+import { computeLinkPaths } from "./compute_path";
 
 /** Inspired on https://observablehq.com/@tomshanley/sankey-circular-deconstructed */
 
@@ -62,13 +64,17 @@ class GraphSetup<NODE_TYPE extends Node = Node, LINK_TYPE extends Link = Link>
     (this.graph = data as GraphData), this;
     this.graph = computeNodeLinks(this.graph, this);
     this.graph = identifyCircles(this.graph, this);
-    this.graph = computeNodeValues(this.graph);
+    this.graph = computeNodeValues(this.graph, this);
     this.graph = computeNodeDepths(this.graph, this);
     this.graph = createVirtualNodes(this.graph, this);
     this.graph = selectCircularLinkTypes(this.graph, this);
     this.graph = adjustSankeySize(this.graph, this);
     this.graph = computeNodeBreadths(this.graph, this);
-    // this.graph = resolveCollisionsAndRelax(this.graph, this);
+    this.graph = resolveCollisionsAndRelax(this.graph, this);
+    this.graph = computeLinkBreadths(this.graph, this);
+    console.table(this.graph.links);
+
+    this.graph = computeLinkPaths(this.graph, this);
     return this;
   }
 }

@@ -2,14 +2,21 @@
 // Nodes are assigned the maximum depth of incoming neighbors plus one;
 // nodes with no incoming links are assigned depth zero, while
 
-import { clone, cloneDeep, groupBy } from "lodash";
+import { groupBy } from "lodash";
 import { GraphData, Graph, Node, Link } from "./model";
 import { align } from "./align";
 import { getColumn } from "./utils";
+import { getSourceLinks, getTargetLinks, findNode } from "./utils/links";
+import { sort } from "d3-array";
 
 const computeNodeDepth = (
   sortedNodes: Node[],
-  key: keyof Pick<Node, "sourceLinks" | "targetLinks">,
+  links: Link[],
+  getLinks: (
+    node: Node,
+    links: Link[],
+    getNodeID: (node: Node) => string
+  ) => Link[],
   linkField: keyof Pick<Link, "target" | "source">,
   valueField: keyof Pick<Node, "height" | "depth">,
   { getNodeID }: Pick<Graph, "getNodeID">
@@ -27,11 +34,13 @@ const computeNodeDepth = (
   ) {
     nodes.forEach((node) => {
       nodeById[getNodeID(node)][0][valueField] = x;
-
-      node[key].forEach((link: Link) => {
-        const t = link[linkField];
-        if (next.indexOf(t) < 0 && !link.circular) {
-          next.push(t);
+      getLinks(node, links, getNodeID).forEach((link: Link) => {
+        const nextId = link[linkField];
+        if (nextId) {
+          const t = findNode(nextId, sortedNodes, getNodeID);
+          if (t && next.indexOf(t) < 0 && !link.circular) {
+            next.push(t);
+          }
         }
       });
     });
@@ -46,9 +55,7 @@ export const computeNodeDepths = (
   settings: Pick<Graph, "sortNodes" | "getNodeID">
 ) => {
   const { sortNodes } = settings;
-  //let graph = cloneDeep(inputGraph);
 
-  var nodes, next, x;
   // TODO if needed sort them
   let sortedNodes = inputGraph.nodes;
 
@@ -75,14 +82,16 @@ export const computeNodeDepths = (
 
   sortedNodes = computeNodeDepth(
     sortedNodes,
-    "sourceLinks",
+    inputGraph.links,
+    getSourceLinks,
     "target",
     "depth",
     settings
   );
   sortedNodes = computeNodeDepth(
     sortedNodes,
-    "targetLinks",
+    inputGraph.links,
+    getTargetLinks,
     "source",
     "height",
     settings
@@ -92,7 +101,7 @@ export const computeNodeDepths = (
   sortedNodes = sortedNodes.map((node) => {
     const column =
       sortNodes === null || sortedNodes === undefined
-        ? align(node, x)
+        ? align(node, 0)
         : getColumn(node);
     const depth = node.depth ?? 0;
     const height = node.height ?? 0;

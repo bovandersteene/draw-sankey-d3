@@ -4,6 +4,7 @@ import { numberOfNonSelfLinkingCycles } from "./utils";
 
 const calculateNodeSize = (
   node: Node,
+  links: Link[],
   nodesLength: number,
   columnsLength: number,
   {
@@ -13,7 +14,11 @@ const calculateNodeSize = (
   graph: Readonly<Pick<GraphData, "ky" | "y1" | "y0">>,
   i: number
 ): Node => {
-  const selfLinkingCycles = numberOfNonSelfLinkingCycles(node, getNodeID);
+  const selfLinkingCycles = numberOfNonSelfLinkingCycles(
+    node,
+    links,
+    getNodeID
+  );
   // if the node is in the last column, and is the only node in that column, put it in the centre
   if (node.depth == columnsLength - 1 && nodesLength == 1) {
     node.y0 = graph.y1 / 2 - node.value * graph.ky;
@@ -54,6 +59,7 @@ const calculateNodeSize = (
 // Assign nodes' breadths, and then shift nodes that overlap (resolveCollisions)
 export const computeNodeBreadths = (
   inputGraph: Readonly<GraphData>,
+
   settings: Pick<Graph<Node, Link>, "getNodeID" | "setNodePositions">
 ) => {
   const { getNodeID, setNodePositions } = settings;
@@ -73,8 +79,8 @@ export const computeNodeBreadths = (
     nodes.sort((a, b) => {
       if (a.circularLinkType == b.circularLinkType) {
         return (
-          numberOfNonSelfLinkingCycles(b, getNodeID) -
-          numberOfNonSelfLinkingCycles(a, getNodeID)
+          numberOfNonSelfLinkingCycles(b, inputGraph.links, getNodeID) -
+          numberOfNonSelfLinkingCycles(a, inputGraph.links, getNodeID)
         );
       } else if (
         a.circularLinkType == "top" &&
@@ -106,6 +112,7 @@ export const computeNodeBreadths = (
       nodes.forEach((node: Node, i) =>
         calculateNodeSize(
           node,
+          inputGraph.links,
           nodesLength,
           columnsLength,
           settings,

@@ -1,4 +1,5 @@
 import { Link, Node } from "./model";
+import { getSourceLinks, getTargetLinks } from "./utils/links";
 
 export const _typeof =
   typeof Symbol === "function" && typeof Symbol.iterator === "symbol"
@@ -29,6 +30,7 @@ export const selfLinking = (link: Link, getNodeID: (node: any) => string) => {
 
 export function numberOfNonSelfLinkingCycles(
   node: Node,
+  links: Link[],
   getNodeID: (node: any) => string
 ) {
   function countNonSelfLinkingCycles(links: Link[]): number {
@@ -37,8 +39,12 @@ export function numberOfNonSelfLinkingCycles(
       return result + 1;
     }, 0);
   }
-  const sourceCount = countNonSelfLinkingCycles(node.sourceLinks);
-  const targetCount = countNonSelfLinkingCycles(node.targetLinks);
+  const sourceCount = countNonSelfLinkingCycles(
+    getSourceLinks(node, links, getNodeID)
+  );
+  const targetCount = countNonSelfLinkingCycles(
+    getTargetLinks(node, links, getNodeID)
+  );
 
   return sourceCount + targetCount;
 }
@@ -69,6 +75,13 @@ export function ascendingBreadth(a: Node, b: Node) {
       return 1;
     }
   }
+}
+export function ascendingSourceBreadth(a: Link, b: Link) {
+  return ascendingBreadth(a.source, b.source) || a.index - b.index;
+}
+
+export function ascendingTargetBreadth(a: Link, b: Link) {
+  return ascendingBreadth(a.target, b.target) || a.index - b.index;
 }
 
 export function nodeCenter(node: Node) {

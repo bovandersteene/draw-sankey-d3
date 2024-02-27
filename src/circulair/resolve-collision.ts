@@ -3,10 +3,17 @@ import { computeColumns } from "./compute_columns";
 import { Graph, GraphData } from "./model";
 import {
   ascendingBreadth,
+  findNode,
   nodeCenter,
   numberOfNonSelfLinkingCycles,
 } from "./utils";
 import * as d3 from "d3";
+import {
+  findSourceNode,
+  findTargetNode,
+  getSourceLinks,
+  getTargetLinks,
+} from "./utils/links";
 export const resolveCollisionsAndRelax = (
   inputGraph: Readonly<GraphData>,
   { sankey, getNodeID }: Pick<Graph, "sankey" | "getNodeID">
@@ -31,10 +38,12 @@ export const resolveCollisionsAndRelax = (
       nodes.forEach(function (node) {
         // check the node is not an orphan
         let nodeHeight;
-        if (node.sourceLinks.length || node.targetLinks.length) {
+        const sourceLinks = getSourceLinks(node, inputGraph.links, getNodeID);
+        const targetLinks = getTargetLinks(node, inputGraph.links, getNodeID);
+        if (sourceLinks.length || targetLinks.length) {
           if (
             node.partOfCycle &&
-            numberOfNonSelfLinkingCycles(node, getNodeID) > 0
+            numberOfNonSelfLinkingCycles(node, inputGraph.links, getNodeID) > 0
           );
           else if (depth == 0 && n == 1) {
             nodeHeight = node.y1 - node.y0;
@@ -49,11 +58,11 @@ export const resolveCollisionsAndRelax = (
           } else {
             let avg = 0;
 
-            let avgTargetY = meanBy(node.sourceLinks, (link) =>
-              nodeCenter(link.source)
+            let avgTargetY = meanBy(sourceLinks, (link) =>
+              nodeCenter(findSourceNode(link, nodes, getNodeID))
             );
-            let avgSourceY = meanBy(node.targetLinks, (link) =>
-              nodeCenter(link.target)
+            let avgSourceY = meanBy(targetLinks, (link) =>
+              nodeCenter(findTargetNode(link, nodes, getNodeID))
             );
 
             if (avgTargetY && avgSourceY) {

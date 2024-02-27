@@ -208,16 +208,16 @@ export const drawSankey = <NODE_TYPE extends Node, LINK_TYPE extends Link>(
     if (node.name == name) {
       opacity = 1;
     }
-    node.sourceLinks.forEach(function (link) {
-      if (link.target.name == name) {
-        opacity = 1;
-      }
-    });
-    node.targetLinks.forEach(function (link) {
-      if (link.source.name == name) {
-        opacity = 1;
-      }
-    });
+    // node.sourceLinks.forEach(function (link) {
+    //   if (link.target.name == name) {
+    //     opacity = 1;
+    //   }
+    // });
+    // node.targetLinks.forEach(function (link) {
+    //   if (link.source.name == name) {
+    //     opacity = 1;
+    //   }
+    // });
 
     return opacity;
   }

@@ -37,18 +37,29 @@ export type SankeyParams = {
   iterations: number;
   minNodePadding: number;
   virtualNodePadding: number;
+  circularLinkGap: number;
 };
 
 export type CircularLinkType = "top" | "bottom";
 
 export type Link = {
   circular?: boolean;
-  circularLinkType?: "top";
+  circularLinkType?: CircularLinkType;
   width: number;
-  target: Node;
-  source: Node;
+  target: string;
+  source: string;
+  targetIndex: number;
+  sourceIndex: number;
   value?: number;
   type: string;
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+  index: number;
+  circularLinkID?: number;
+  circularPathData: any;
+  path: string;
 };
 export type Node = {
   column?: number;
@@ -65,8 +76,9 @@ export type Node = {
   height: number;
   width: number;
   depth: number;
-  sourceLinks: Link[];
-  targetLinks: Link[];
+  index: number;
+  // sourceLinks: Link[];
+  // targetLinks: Link[];
 };
 
 export type Graph<
@@ -113,5 +125,6 @@ export const DefaultGraph: Graph<any, Link> = {
     iterations: 10,
     minNodePadding: 7,
     virtualNodePadding: 3,
+    circularLinkGap: 5,
   },
 };
