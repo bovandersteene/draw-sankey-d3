@@ -1,0 +1,30 @@
+export const data = {
+  nodes: [ { name: 'startA', col: 0 },
+  { name: 'startB', col: 0 },
+  { name: 'process1', col: 1 },
+  { name: 'process2', col: 1 },
+  { name: 'process3', col: 2 },
+  { name: 'process4', col: 2 },
+  { name: 'process5', col: 3 },
+  { name: 'process6', col: 4 },
+  { name: 'process7', col: 5 },
+  { name: 'process8', col: 6 },
+  { name: 'process9', col: 7 },
+  { name: 'process10', col: 6 },
+  { name: 'process11', col: 8 },
+  { name: 'process12', col: 6 },
+  { name: 'process13', col: 9 },
+  { name: 'process14', col: 9 },
+  { name: 'process15', col: 8 },
+  { name: 'process16', col: 9 },
+  { name: 'finishA', col: 10 },
+  { name: 'finishB', col: 10 },],
+  links: [
+    { source: 'startA', target: 'process8', value: 20, optimal: 'yes' },
+  
+  ],x0: 25,
+  y0: 25,
+  x1: 975,
+  y1: 475,
+  py: 0
+};
