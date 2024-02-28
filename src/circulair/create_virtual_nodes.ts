@@ -1,6 +1,86 @@
 import { cloneDeep, groupBy } from "lodash";
-import { Graph, GraphData, Link } from "./model";
+import { Graph, GraphData, Link, Node } from "./model";
 import { _typeof, findNode } from "./utils";
+import {
+  findSourceNode,
+  findTargetNode,
+  getSourceLinks,
+  getTargetLinks,
+} from "./utils/links";
+import { addIndexToLink } from "./utils/node";
+
+const createReplacedLinks = (
+  link: Link,
+  targetNode: Node,
+  sourceNode: Node,
+  virtualNodeIndex: number,
+  virtualLinkIndex: number,
+  { getNodeID }: Pick<Graph, "getNodeID">
+) => {
+  const links = [];
+  const nodes = [];
+  links.push({ ...link, type: "replaced" });
+
+  let totalToCreate = targetNode.column - sourceNode.column - 1;
+  //console.log("total nodes to create: " + totalToCreate);
+
+  for (var n = 0; n < totalToCreate; n++) {
+    let newNode = {} as Node;
+
+    //get the next index number
+    virtualNodeIndex = virtualNodeIndex + 1;
+    newNode.name = "virtualNode" + virtualNodeIndex;
+    newNode.index = "v" + virtualNodeIndex;
+
+    //console.log(" created node: " + newNode.name);
+
+    // newNode.sourceLinks = [];
+    // newNode.targetLinks = [];
+    newNode.partOfCycle = false;
+    newNode.value = link.value;
+    newNode.depth = sourceNode.depth + (n + 1);
+    newNode.height = sourceNode.height - (n + 1);
+    newNode.column = sourceNode.column + (n + 1);
+    newNode.virtual = true;
+    newNode.replacedLink = link.index;
+
+    // nodes.push(newNode);
+
+    let newLink = {} as Link;
+    let vMinus1 = virtualNodeIndex - 1;
+    newLink.source = n == 0 ? getNodeID(sourceNode) : "virtualNode" + vMinus1;
+    //   newLink.sourceIndex =
+    newLink.target = getNodeID(newNode);
+    newLink.value = link.value;
+    newLink.index = "virtualLink" + virtualLinkIndex;
+    virtualLinkIndex = virtualLinkIndex + 1;
+    newLink.circular = false;
+    newLink.type = "virtual";
+    newLink.parentLink = link.index;
+
+    //console.log(newLink);
+
+    // links.push(newLink);
+  }
+
+  let lastLink = {} as Link;
+  lastLink.source = "virtualNode" + virtualNodeIndex;
+  lastLink.target = getNodeID(targetNode);
+  lastLink.targetIndex = targetNode.index;
+
+  lastLink.value = link.value;
+  lastLink.index = "virtualLink" + virtualLinkIndex;
+  virtualLinkIndex = virtualLinkIndex + 1;
+  lastLink.circular = false;
+  lastLink.type = "virtual";
+  lastLink.parentLink = link.index;
+
+  //console.log(lastLink);
+
+  // links.push(lastLink);
+
+  return { links, nodes, virtualLinkIndex, virtualNodeIndex };
+};
 
 export const createVirtualNodes = (
   inputGraph: Readonly<GraphData>,
@@ -11,145 +91,86 @@ export const createVirtualNodes = (
   let links = inputGraph.links;
   let nodes = inputGraph.nodes;
 
+  console.log("links", links.length, "nodes", nodes.length);
   if (useVirtualRoutes) {
     let virtualNodeIndex = -1;
     let virtualLinkIndex = 0;
-    let linksLength = inputGraph.links.length;
 
     links = [];
-    for (let linkIndex = 0; linkIndex < linksLength; linkIndex++) {
-      const thisLink = inputGraph.links[linkIndex];
 
-      /*
-      console.log("+++++++++++++++++ ");
-      console.log(
-        thisLink.index +
-          "  -   columns " +
-          thisLink.source.column +
-          "  <-> " +
-          thisLink.target.column
-      );
-      */
+    inputGraph.links.forEach((link) => {
+      const targetNode = findTargetNode(link, inputGraph.nodes, getNodeID);
+      const sourceNode = findSourceNode(link, inputGraph.nodes, getNodeID);
 
-      //if the link spans more than 1 column, then replace it with virtual nodes and links
-      if (thisLink.target.column - thisLink.source.column < 2) {
-        thisLink.type = "normal";
+      if (
+        !targetNode ||
+        !sourceNode ||
+        targetNode.column - sourceNode.column < 2
+      ) {
+        link.type = "normal";
+        links.push({ ...link, type: "normal" });
       } else {
-        //console.log("NEEDS NEW VIRTUAL LINKS");
-        //console.log("link index: " + thisLink.index);
+        const replaced = createReplacedLinks(
+          link,
+          targetNode,
+          sourceNode,
+          virtualNodeIndex,
+          virtualLinkIndex,
+          { getNodeID }
+        );
 
-        thisLink.type = "replaced";
-
-        let totalToCreate = thisLink.target.column - thisLink.source.column - 1;
-        //console.log("total nodes to create: " + totalToCreate);
-
-        for (var n = 0; n < totalToCreate; n++) {
-          let newNode = {};
-
-          //get the next index number
-          virtualNodeIndex = virtualNodeIndex + 1;
-          newNode.name = "virtualNode" + virtualNodeIndex;
-          newNode.index = "v" + virtualNodeIndex;
-
-          //console.log(" created node: " + newNode.name);
-
-          newNode.sourceLinks = [];
-          newNode.targetLinks = [];
-          newNode.partOfCycle = false;
-          newNode.value = thisLink.value;
-          newNode.depth = thisLink.source.depth + (n + 1);
-          newNode.height = thisLink.source.height - (n + 1);
-          newNode.column = thisLink.source.column + (n + 1);
-          newNode.virtual = true;
-          newNode.replacedLink = thisLink.index;
-
-          graph.nodes.push(newNode);
-
-          let newLink = {};
-          let vMinus1 = virtualNodeIndex - 1;
-          newLink.source = n == 0 ? thisLink.source : "virtualNode" + vMinus1;
-          newLink.target = newNode.name;
-          newLink.value = thisLink.value;
-          newLink.index = "virtualLink" + virtualLinkIndex;
-          virtualLinkIndex = virtualLinkIndex + 1;
-          newLink.circular = false;
-          newLink.type = "virtual";
-          newLink.parentLink = thisLink.index;
-
-          //console.log(newLink);
-
-          graph.links.push(newLink);
-        }
-
-        let lastLink = {};
-        lastLink.source = "virtualNode" + virtualNodeIndex;
-        lastLink.target = thisLink.target;
-
-        lastLink.value = thisLink.value;
-        lastLink.index = "virtualLink" + virtualLinkIndex;
-        virtualLinkIndex = virtualLinkIndex + 1;
-        lastLink.circular = false;
-        lastLink.type = "virtual";
-        lastLink.parentLink = thisLink.index;
-
-        //console.log(lastLink);
-
-        links.push(lastLink);
+        links.push(...replaced.links);
+        nodes.push(...replaced.nodes);
+        console.log(links.length, nodes.length);
+        virtualLinkIndex = replaced.virtualLinkIndex;
+        virtualNodeIndex = replaced.virtualNodeIndex;
       }
-    }
+    });
 
     //console.log(graph.links);
 
-    var nodeById = groupBy(nodes, getNodeID);
-
-    links.forEach(function (link, i) {
+    links = inputGraph.links.map((link, i) => {
       if (link.type == "virtual") {
-        var source = link.source;
-        var target = link.target;
-        if (
-          (typeof source === "undefined" ? "undefined" : _typeof(source)) !==
-          "object"
-        ) {
-          //console.log(source);
-          //console.log(find(nodeById, source));
-          source = link.source = findNode(nodeById, source);
-        }
-        if (
-          (typeof target === "undefined" ? "undefined" : _typeof(target)) !==
-          "object"
-        ) {
-          target = link.target = findNode(nodeById, target);
-        }
-        source.sourceLinks.push(link);
-        target.targetLinks.push(link);
+        return addIndexToLink(link, null, nodes, settings);
       }
+      return link;
     });
 
-    let l = links.length;
-    while (l--) {
-      if (links[l].type == "replaced") {
-        let obj = cloneDeep(links[l]);
-        links.splice(l, 1);
-        replacedLinks.push(obj);
-      }
-    }
+    // let l = links.length;
+    // while (l--) {
+    //   if (links[l].type == "replaced") {
+    //     let obj = cloneDeep(links[l]);
+    //     links.splice(l, 1);
+    //     replacedLinks.push(obj);
+    //   }
+    // }
 
-    nodes.forEach(function (node) {
-      let sIndex = node.sourceLinks.length;
-      while (sIndex--) {
-        if (node.sourceLinks[sIndex].type == "replaced") {
-          node.sourceLinks.splice(sIndex, 1);
-        }
-      }
+    // console.log(nodes);
+    // nodes.forEach(function (node) {
+    //   const sourceLinks = getSourceLinks(node, links, getNodeID);
+    //   let sIndex = sourceLinks.length;
+    //   while (sIndex--) {
+    //     if (sourceLinks[sIndex].type == "replaced") {
+    //       // sourceLinks.splice(sIndex, 1);
+    //     }
+    //   }
 
-      let tIndex = node.targetLinks.length;
-      while (tIndex--) {
-        if (node.targetLinks[tIndex].type == "replaced") {
-          node.targetLinks.splice(tIndex, 1);
-        }
-      }
-    });
+    //   const targetLinks = getTargetLinks(node, links, getNodeID);
+    //   let tIndex = targetLinks.length;
+    //   while (tIndex--) {
+    //     if (targetLinks[tIndex].type == "replaced") {
+    //       // targetLinks.splice(tIndex, 1);
+    //     }
+    //   }
+    // });
   }
 
-  return { ...inputGraph, replacedLinks, links, nodes };
+  console.log("links", links.length, "nodes", nodes.length);
+
+  return {
+    ...inputGraph,
+    replacedLinks,
+    links: links.filter((l) => l.type !== "replaced"),
+    nodes,
+  };
 };

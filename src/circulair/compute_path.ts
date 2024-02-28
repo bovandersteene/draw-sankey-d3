@@ -22,6 +22,7 @@ const computePath = (
   { getNodeID, sankey }: Pick<Graph<Node, Link>, "getNodeID" | "sankey">
 ): Link => {
   if (link.circular) {
+    console.warn(link.target, "-->", link.source, "draw it circular");
     // link.path = createCircularPathString(link);
   } else {
     var normalPath = linkHorizontal()
@@ -35,7 +36,6 @@ const computePath = (
         const target = findTargetNode(link, nodes, getNodeID);
         var x = target.x0;
         var y = d.y1;
-        console.log([x, y]);
         return [x, y];
       });
     link.path = normalPath(link);

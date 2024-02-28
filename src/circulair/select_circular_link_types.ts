@@ -4,59 +4,66 @@
 import { cloneDeep } from "lodash";
 import { Graph, GraphData } from "./model";
 import { isSelfLinking, selfLinking } from "./utils";
+import { findSourceNode } from "./utils/links";
 
 // - if not, choose the type with fewer links
-export function selectCircularLinkTypes<TYPE>(
+export function selectCircularLinkTypes(
   inputGraph: GraphData,
-  { getNodeID }: Pick<Graph<TYPE>, "getNodeID">
+  { getNodeID }: Pick<Graph, "getNodeID">
 ) {
   let graph = cloneDeep(inputGraph);
 
   var numberOfTops = 0;
   var numberOfBottoms = 0;
-  graph.links.forEach(function (link) {
-    if (link.circular) {
-      // if either souce or target has type already use that
-      if (link.source.circularLinkType || link.target.circularLinkType) {
-        // default to source type if available
-        link.circularLinkType = link.source.circularLinkType
-          ? link.source.circularLinkType
-          : link.target.circularLinkType;
-      } else {
-        link.circularLinkType =
-          numberOfTops < numberOfBottoms ? "top" : "bottom";
-      }
-
-      if (link.circularLinkType == "top") {
-        numberOfTops = numberOfTops + 1;
-      } else {
-        numberOfBottoms = numberOfBottoms + 1;
-      }
-
-      graph.nodes.forEach((node) => {
-        if (isSelfLinking(node, link, getNodeID)) {
-          node.circularLinkType = link.circularLinkType;
-        }
-      });
-    }
-  });
-
-  const links =
+  let links =
     //correct self-linking links to be same direction as node
-    graph.links.map((link) => {
-      if (link.circular) {
-        //if both source and target node are same type, then link should have same type
-        if (link.source.circularLinkType == link.target.circularLinkType) {
-          link.circularLinkType = link.source.circularLinkType;
-        }
-        //if link is selflinking, then link should have same type as node
-        if (getNodeID(link.target) === getNodeID(link.source)) {
-          link.circularLinkType = link.source.circularLinkType;
-        }
-      }
+    graph.links
+      .map(function (link) {
+        if (link.circular) {
+          const sourceNode = findSourceNode(link, inputGraph.nodes, getNodeID);
+          const targetNode = findSourceNode(link, inputGraph.nodes, getNodeID);
+          // if either souce or target has type already use that
+          if (sourceNode.circularLinkType || targetNode.circularLinkType) {
+            // default to source type if available
+            link.circularLinkType = sourceNode.circularLinkType
+              ? sourceNode.circularLinkType
+              : targetNode.circularLinkType;
+          } else {
+            link.circularLinkType =
+              numberOfTops < numberOfBottoms ? "top" : "bottom";
+          }
 
-      return link;
-    });
+          if (link.circularLinkType == "top") {
+            numberOfTops = numberOfTops + 1;
+          } else {
+            numberOfBottoms = numberOfBottoms + 1;
+          }
+
+          graph.nodes.forEach((node) => {
+            if (isSelfLinking(node, link, getNodeID)) {
+              node.circularLinkType = link.circularLinkType;
+            }
+          });
+        }
+
+        return link;
+      })
+      .map((link) => {
+        const sourceNode = findSourceNode(link, inputGraph.nodes, getNodeID);
+        const targetNode = findSourceNode(link, inputGraph.nodes, getNodeID);
+        if (link.circular) {
+          //if both source and target node are same type, then link should have same type
+          if (sourceNode.circularLinkType == targetNode.circularLinkType) {
+            link.circularLinkType = sourceNode.circularLinkType;
+          }
+          //if link is selflinking, then link should have same type as node
+          if (getNodeID(targetNode) === getNodeID(sourceNode)) {
+            link.circularLinkType = sourceNode.circularLinkType;
+          }
+        }
+
+        return link;
+      });
 
   return { ...graph, links };
 }

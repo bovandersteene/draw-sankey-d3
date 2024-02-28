@@ -48,24 +48,28 @@ export type Link = {
   width: number;
   target: string;
   source: string;
-  targetIndex: number;
-  sourceIndex: number;
+  targetIndex: NodeIndex;
+  sourceIndex: NodeIndex;
   value?: number;
   type: string;
   x0: number;
   y0: number;
   x1: number;
   y1: number;
-  index: number;
+  index: number | string;
   circularLinkID?: number;
   circularPathData: any;
   path: string;
+  parentLink?: NodeIndex;
 };
+
+type NodeIndex = number | string;
 export type Node = {
-  column?: number;
+  name: string;
+  column: number;
   col?: number;
   values?: any[];
-  value: number;
+  value?: number;
   circular?: boolean;
   circularLinkType?: CircularLinkType;
   partOfCycle?: boolean;
@@ -76,7 +80,10 @@ export type Node = {
   height: number;
   width: number;
   depth: number;
-  index: number;
+  index: NodeIndex;
+  virtual?: boolean;
+  // Replaced link index
+  replacedLink?: NodeIndex;
   // sourceLinks: Link[];
   // targetLinks: Link[];
 };
@@ -100,10 +107,10 @@ export type Graph<
 
 export const DefaultGraph: Graph<any, Link> = {
   width: 1000,
-  padding: 0,
+  padding: 25,
   height: 500,
   graph: undefined,
-  useVirtualRoutes: false,
+  useVirtualRoutes: true,
   nodeColor: (d: any, index) => {
     return d3.scaleSequential(d3.interpolateCool).domain([0, 1000])(d.x0);
   },

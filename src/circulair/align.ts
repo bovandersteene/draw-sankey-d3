@@ -1,3 +1,3 @@
 export const align = (node, x) => {
-  return node.column ?? node.col;
+  return node.column ?? node.col ?? x;
 };

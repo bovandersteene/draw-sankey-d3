@@ -101,7 +101,7 @@ export const computeNodeDepths = (
   sortedNodes = sortedNodes.map((node) => {
     const column =
       sortNodes === null || sortedNodes === undefined
-        ? align(node, 0)
+        ? align(node, node.depth)
         : getColumn(node);
     const depth = node.depth ?? 0;
     const height = node.height ?? 0;

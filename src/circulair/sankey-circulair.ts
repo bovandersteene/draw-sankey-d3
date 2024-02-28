@@ -52,27 +52,36 @@ class GraphSetup<NODE_TYPE extends Node = Node, LINK_TYPE extends Link = Link>
     this.nodeColor = setup?.nodeColor ?? DefaultGraph.nodeColor;
     this.getNodeID = setup?.getNodeID ?? DefaultGraph.getNodeID;
     this.sortNodes = setup?.sortNodes ?? null;
-    this.height = setup?.height ?? 500;
-    this.padding = setup?.padding ?? 0;
+    this.height = setup?.height ?? DefaultGraph.height;
+    this.padding = setup?.padding ?? DefaultGraph.padding;
     this.arrow = setup?.arrow ?? null;
     this.sankey = setup?.sankey ?? DefaultGraph.sankey;
+    if (!setup?.sankey) {
+      this.sankey.extend = {
+        x0: this.padding,
+        y0: this.padding,
+        x1: this.width - this.padding,
+        y1: this.height - this.padding,
+      };
+    }
     this.useVirtualRoutes =
       setup?.useVirtualRoutes ?? DefaultGraph.useVirtualRoutes;
   }
 
   draw(data: SankeyData) {
-    (this.graph = data as GraphData), this;
+    (this.graph = { ...data, ...this.sankey.extend, py: 0 } as GraphData), this;
     this.graph = computeNodeLinks(this.graph, this);
     this.graph = identifyCircles(this.graph, this);
+    this.graph = selectCircularLinkTypes(this.graph, this);
     this.graph = computeNodeValues(this.graph, this);
     this.graph = computeNodeDepths(this.graph, this);
-    this.graph = createVirtualNodes(this.graph, this);
-    this.graph = selectCircularLinkTypes(this.graph, this);
+    // this.graph = createVirtualNodes(this.graph, this);
     this.graph = adjustSankeySize(this.graph, this);
+    console.table(this.graph.nodes);
+    console.table(this.graph.links);
     this.graph = computeNodeBreadths(this.graph, this);
     this.graph = resolveCollisionsAndRelax(this.graph, this);
     this.graph = computeLinkBreadths(this.graph, this);
-    console.table(this.graph.links);
 
     this.graph = computeLinkPaths(this.graph, this);
     return this;
