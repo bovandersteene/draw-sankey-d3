@@ -39,7 +39,7 @@ class GraphSetup<NODE_TYPE extends Node = Node, LINK_TYPE extends Link = Link>
   public graph: any;
   public nodeColor: (d: NODE_TYPE) => string;
   public getNodeID: (d: NODE_TYPE) => string;
-  public arrow?: GraphArrow | null | undefined;
+  public arrow: GraphArrow | null;
   public sankey: SankeyParams;
   public useVirtualRoutes: boolean;
 
@@ -54,7 +54,7 @@ class GraphSetup<NODE_TYPE extends Node = Node, LINK_TYPE extends Link = Link>
     this.sortNodes = setup?.sortNodes ?? null;
     this.height = setup?.height ?? DefaultGraph.height;
     this.padding = setup?.padding ?? DefaultGraph.padding;
-    this.arrow = setup?.arrow ?? null;
+    this.arrow = setup?.arrow ?? DefaultGraph.arrow;
     this.sankey = setup?.sankey ?? DefaultGraph.sankey;
     if (!setup?.sankey) {
       this.sankey.extend = {

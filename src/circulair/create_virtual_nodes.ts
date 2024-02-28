@@ -1,12 +1,6 @@
-import { cloneDeep, groupBy } from "lodash";
 import { Graph, GraphData, Link, Node } from "./model";
-import { _typeof, findNode } from "./utils";
-import {
-  findSourceNode,
-  findTargetNode,
-  getSourceLinks,
-  getTargetLinks,
-} from "./utils/links";
+import { _typeof } from "./utils";
+import { findSourceNode, findTargetNode } from "./utils/links";
 import { addIndexToLink } from "./utils/node";
 
 const createReplacedLinks = (
@@ -22,16 +16,6 @@ const createReplacedLinks = (
   links.push({ ...link, type: "replaced" });
 
   let totalToCreate = targetNode.column - sourceNode.column - 1;
-  //console.log("total nodes to create: " + totalToCreate);
-  console.log(
-    "create v nodes",
-    targetNode.name,
-    targetNode.column,
-    sourceNode.column,
-    sourceNode.name,
-    totalToCreate,
-    virtualNodeIndex
-  );
   for (var n = 0; n < totalToCreate; n++) {
     let newNode = {} as Node;
 
@@ -39,8 +23,6 @@ const createReplacedLinks = (
     virtualNodeIndex = virtualNodeIndex + 1;
     newNode.name = "virtualNode" + virtualNodeIndex;
     newNode.index = "v" + virtualNodeIndex;
-
-    //console.log(" created node: " + newNode.name);
 
     // newNode.sourceLinks = [];
     // newNode.targetLinks = [];
@@ -51,7 +33,6 @@ const createReplacedLinks = (
     newNode.column = sourceNode.column + (n + 1);
     newNode.virtual = true;
     newNode.replacedLink = link.index;
-    console.log(newNode.name);
     nodes.push(newNode);
 
     let newLink = {} as Link;
@@ -65,8 +46,6 @@ const createReplacedLinks = (
     newLink.circular = false;
     newLink.type = "virtual";
     newLink.parentLink = link.index;
-
-    //console.log(newLink);
 
     links.push(newLink);
   }
@@ -83,8 +62,6 @@ const createReplacedLinks = (
   lastLink.type = "virtual";
   lastLink.parentLink = link.index;
 
-  //console.log(lastLink);
-
   links.push(lastLink);
 
   return { links, nodes, virtualLinkIndex, virtualNodeIndex };
@@ -99,7 +76,6 @@ export const createVirtualNodes = (
   let links = inputGraph.links;
   let nodes = inputGraph.nodes;
 
-  console.log("links", links.length, "nodes", nodes.length);
   if (useVirtualRoutes) {
     let virtualNodeIndex = -1;
     let virtualLinkIndex = 0;

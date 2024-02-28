@@ -1,85 +1,89 @@
 import * as d3 from "d3";
 import { Graph, GraphArrow, Link, Node } from "./model";
 
-const drawArrow = (arrowSetup: GraphArrow) => {
-  // let totalDashArrayLength = arrowSetup.length + arrowSetup.gapLength;
-  // var arrowsG = linkG
-  //   .data(graph.links)
-  //   .enter()
-  //   .append("g")
-  //   .attr("class", "g-arrow");
-  // let arrows = arrowsG
-  //   .append("path")
-  //   .attr("d", arrowSetup.path)
-  //   .style("stroke-width", 1)
-  //   .style("stroke", arrowSetup.color)
-  //   .style("stroke-dasharray", arrowSetup.length + "," + arrowSetup.gapLength);
-  // arrows.each((arrow) => {
-  //   let thisPath = d3.select(this).node();
-  //   let parentG = d3.select(this.parentNode);
-  //   let pathLength = thisPath.getTotalLength();
-  //   let numberOfArrows = Math.ceil(pathLength / totalDashArrayLength);
-  //   // remove the last arrow head if it will overlap the target node
-  //   if (
-  //     (numberOfArrows - 1) * totalDashArrayLength +
-  //       (arrow.length + (arrow.headSize + 1)) >
-  //     pathLength
-  //   ) {
-  //     numberOfArrows = numberOfArrows - 1;
-  //   }
-  //   let arrowHeadData = d3.range(numberOfArrows).map(function (d, i) {
-  //     let length = i * totalDashArrayLength + arrow.length;
-  //     let point = thisPath.getPointAtLength(length);
-  //     let previousPoint = thisPath.getPointAtLength(length - 2);
-  //     let rotation = 0;
-  //     if (point.y == previousPoint.y) {
-  //       rotation = point.x < previousPoint.x ? 180 : 0;
-  //     } else if (point.x == previousPoint.x) {
-  //       rotation = point.y < previousPoint.y ? -90 : 90;
-  //     } else {
-  //       let adj = Math.abs(point.x - previousPoint.x);
-  //       let opp = Math.abs(point.y - previousPoint.y);
-  //       let angle = Math.atan(opp / adj) * (180 / Math.PI);
-  //       if (point.x < previousPoint.x) {
-  //         angle = angle + (90 - angle) * 2;
-  //       }
-  //       if (point.y < previousPoint.y) {
-  //         rotation = -angle;
-  //       } else {
-  //         rotation = angle;
-  //       }
-  //     }
-  //     return { x: point.x, y: point.y, rotation: rotation };
-  //   });
-  //   let arrowHeads = parentG
-  //     .selectAll(".arrow-heads")
-  //     .data(arrowHeadData)
-  //     .enter()
-  //     .append("path")
-  //     .attr("d", function (d) {
-  //       return (
-  //         "M" +
-  //         d.x +
-  //         "," +
-  //         (d.y - arrow.headSize / 2) +
-  //         " " +
-  //         "L" +
-  //         (d.x + arrow.headSize) +
-  //         "," +
-  //         d.y +
-  //         " " +
-  //         "L" +
-  //         d.x +
-  //         "," +
-  //         (d.y + arrow.headSize / 2)
-  //       );
-  //     })
-  //     .attr("class", "arrow-head")
-  //     .attr("transform", function (d) {
-  //       return "rotate(" + d.rotation + "," + d.x + "," + d.y + ")";
-  //     })
-  //     .style("fill", arrow.color);
-  // });
+function drawArrow(arrow: any, arrowSetup: GraphArrow) {
+  let totalDashArrayLength = arrowSetup.length + arrowSetup.gapLength;
+  let thisPath = d3.select(arrow).node();
+  let parentG = d3.select(arrow.parentNode);
+  console.log(thisPath);
+  let pathLength = 1; //thisPath.getTotalLength();
+  let numberOfArrows = Math.ceil(pathLength / totalDashArrayLength);
+  // remove the last arrow head if it will overlap the target node
+  if (
+    (numberOfArrows - 1) * totalDashArrayLength +
+      (arrow.length + (arrow.headSize + 1)) >
+    pathLength
+  ) {
+    numberOfArrows = numberOfArrows - 1;
+  }
+  let arrowHeadData = d3.range(numberOfArrows).map(function (d, i) {
+    let length = i * totalDashArrayLength + arrow.length;
+    let point = thisPath.getPointAtLength(length);
+    let previousPoint = thisPath.getPointAtLength(length - 2);
+    let rotation = 0;
+    if (point.y == previousPoint.y) {
+      rotation = point.x < previousPoint.x ? 180 : 0;
+    } else if (point.x == previousPoint.x) {
+      rotation = point.y < previousPoint.y ? -90 : 90;
+    } else {
+      let adj = Math.abs(point.x - previousPoint.x);
+      let opp = Math.abs(point.y - previousPoint.y);
+      let angle = Math.atan(opp / adj) * (180 / Math.PI);
+      if (point.x < previousPoint.x) {
+        angle = angle + (90 - angle) * 2;
+      }
+      if (point.y < previousPoint.y) {
+        rotation = -angle;
+      } else {
+        rotation = angle;
+      }
+    }
+    return { x: point.x, y: point.y, rotation: rotation };
+  });
+  let arrowHeads = parentG
+    .selectAll(".arrow-heads")
+    .data(arrowHeadData)
+    .enter()
+    .append("path")
+    .attr("d", function (d) {
+      return (
+        "M" +
+        d.x +
+        "," +
+        (d.y - arrow.headSize / 2) +
+        " " +
+        "L" +
+        (d.x + arrow.headSize) +
+        "," +
+        d.y +
+        " " +
+        "L" +
+        d.x +
+        "," +
+        (d.y + arrow.headSize / 2)
+      );
+    })
+    .attr("class", "arrow-head")
+    .attr("transform", function (d) {
+      return "rotate(" + d.rotation + "," + d.x + "," + d.y + ")";
+    })
+    .style("fill", arrow.color);
+}
+
+const drawArrows = (arrowSetup: GraphArrow, linkG: any, links: Link[]) => {
+  const arrowsG = linkG
+    .data(links)
+    .enter()
+    .append("g")
+    .attr("class", "g-arrow");
+  const arrows = arrowsG
+    .append("path")
+    .attr("d", arrowSetup.path)
+    .style("stroke-width", 1)
+    .style("stroke", arrowSetup.color)
+    .style("stroke-dasharray", arrowSetup.length + "," + arrowSetup.gapLength);
+
+  arrows.each((arrow) => drawArrow(arrow, arrowSetup));
 };
 
 export const drawSankey = <NODE_TYPE extends Node, LINK_TYPE extends Link>(
@@ -198,7 +202,7 @@ export const drawSankey = <NODE_TYPE extends Node, LINK_TYPE extends Link>(
   });
 
   if (arrow && arrow.draw) {
-    drawArrow(arrow);
+    drawArrows(arrow, linkG, graph.links);
   }
 
   function highlightNodes(node, name) {

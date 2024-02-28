@@ -3,6 +3,7 @@ import { linkHorizontal } from "d3-shape";
 import { Graph, GraphData, Link, Node } from "./model";
 import { selfLinking } from "./utils";
 import { findSourceNode, findTargetNode, getSourceLinks } from "./utils/links";
+import { computeCircularPathString } from "./compute-circulair-path";
 function sortLinkSourceYDescending(link1, link2) {
   return link2.y0 - link1.y0;
 } // sort ascending links by their target vertical position, y1
@@ -15,33 +16,42 @@ function sortLinkSourceYAscending(link1, link2) {
 function sortLinkTargetYDescending(link1, link2) {
   return link2.y1 - link1.y1;
 }
+
+const computeNormalPath = (
+  link: Readonly<Link>,
+  source: Readonly<Node>,
+  target: Readonly<Node>
+) => {
+  const normalPath = linkHorizontal()
+    .source((d: any) => {
+      var x = source.x0 + (source.x1 - source.x0);
+      var y = d.y0;
+      return [x, y];
+    })
+    .target((d: any) => {
+      var x = target.x0;
+      var y = d.y1;
+      return [x, y];
+    });
+
+  return normalPath(link as any);
+};
 const computePath = (
   link: Link,
-  links: Link[],
   nodes: Node[],
-  { getNodeID, sankey }: Pick<Graph<Node, Link>, "getNodeID" | "sankey">
+  { getNodeID }: Pick<Graph<Node, Link>, "getNodeID">
 ): Link => {
+  let path: string | null;
+  const source = findSourceNode(link, nodes, getNodeID);
+  const target = findTargetNode(link, nodes, getNodeID);
+
   if (link.circular) {
-    console.warn(link.target, "-->", link.source, "draw it circular");
-    // link.path = createCircularPathString(link);
+    path = computeCircularPathString(link);
   } else {
-    var normalPath = linkHorizontal()
-      .source(function (d) {
-        const source = findSourceNode(link, nodes, getNodeID);
-        var x = source.x0 + (source.x1 - source.x0);
-        var y = d.y0;
-        return [x, y];
-      })
-      .target(function (d) {
-        const target = findTargetNode(link, nodes, getNodeID);
-        var x = target.x0;
-        var y = d.y1;
-        return [x, y];
-      });
-    link.path = normalPath(link);
+    path = computeNormalPath(link, source, target);
   }
 
-  return link;
+  return { ...link, path };
 };
 
 export const computeLinkPaths = (
@@ -49,7 +59,7 @@ export const computeLinkPaths = (
   settings: Graph
 ) => {
   const links = inputGraph.links.map((link) =>
-    computePath(link, inputGraph.links, inputGraph.nodes, settings)
+    computePath(link, inputGraph.nodes, settings)
   );
   return { ...inputGraph, links };
 };

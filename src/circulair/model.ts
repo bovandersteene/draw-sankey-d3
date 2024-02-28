@@ -1,15 +1,23 @@
 import * as d3 from "d3";
 
 export type GraphArrow = {
-  draw: true;
+  draw: boolean;
   length: number;
   gapLength: number;
-  path: string;
+  headSize: number;
+  path: (link: Link) => string;
   color: string;
-  headSize: string;
 };
 
-export type SankeyData = Pick<GraphData, "links" | "nodes">;
+type NodeData = { name: string };
+type LinkData = { source: string; target: string };
+export type SankeyData<
+  NODE_TYPE extends NodeData = NodeData,
+  LINK_TYPE extends LinkData = LinkData
+> = {
+  links: LINK_TYPE[];
+  nodes: NODE_TYPE[];
+};
 
 export type GraphData<
   NODE_TYPE extends Node = Node,
@@ -59,7 +67,7 @@ export type Link = {
   index: number | string;
   circularLinkID?: number;
   circularPathData: any;
-  path: string;
+  path: string | null;
   parentLink?: NodeIndex;
 };
 
@@ -101,7 +109,7 @@ export type Graph<
   sortNodes: ((d: NODE_TYPE) => any) | null;
   setNodePositions?: boolean;
   sankey: SankeyParams;
-  arrow?: GraphArrow | null;
+  arrow: GraphArrow | null;
   useVirtualRoutes: boolean;
 };
 
@@ -133,5 +141,13 @@ export const DefaultGraph: Graph<any, Link> = {
     minNodePadding: 7,
     virtualNodePadding: 3,
     circularLinkGap: 5,
+  },
+  arrow: {
+    draw: false,
+    arrowColour: "DarkSlateGrey",
+    length: 10,
+    gapLength: 70,
+    headSize: 4,
+    path: (link: Link) => link.path,
   },
 };
