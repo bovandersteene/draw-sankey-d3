@@ -22,7 +22,8 @@ import { pick } from "lodash";
 import { resolveCollisionsAndRelax } from "./resolve-collision";
 import { computeColumns } from "./compute_columns";
 import { computeLinkBreadths } from "./compute_link_breaths";
-import { computeLinkPaths } from "./compute_path";
+import { computeLinkPaths } from "./path-data/compute_path";
+import { addCircularPathData } from "./add-circulair-path-data";
 
 /** Inspired on https://observablehq.com/@tomshanley/sankey-circular-deconstructed */
 
@@ -80,6 +81,8 @@ class GraphSetup<NODE_TYPE extends Node = Node, LINK_TYPE extends Link = Link>
     this.graph = computeNodeBreadths(this.graph, this);
     this.graph = resolveCollisionsAndRelax(this.graph, this);
     this.graph = computeLinkBreadths(this.graph, this);
+
+    //straigtenVirtualNodes
 
     this.graph = computeLinkPaths(this.graph, this);
     return this;

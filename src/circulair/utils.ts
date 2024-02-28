@@ -1,5 +1,10 @@
 import { Link, Node } from "./model";
-import { getSourceLinks, getTargetLinks } from "./utils/links";
+import {
+  findSourceNode,
+  findTargetNode,
+  getSourceLinks,
+  getTargetLinks,
+} from "./utils/links";
 
 export const _typeof =
   typeof Symbol === "function" && typeof Symbol.iterator === "symbol"
@@ -48,6 +53,25 @@ export function numberOfNonSelfLinkingCycles(
 
   return sourceCount + targetCount;
 }
+
+export const onlyCircularLink = (
+  link: Link,
+  links: Link[],
+  nodes: Node[],
+  getNodeID: (node: any) => string
+) => {
+  const sourceNode = findSourceNode(link, nodes, getNodeID);
+  const nodeSourceLinks = getSourceLinks(sourceNode, links, getNodeID);
+  let hasNonCircular = nodeSourceLinks.some((l) => !l.circular);
+
+  if (hasNonCircular) return false;
+
+  const targetNode = findTargetNode(link, nodes, getNodeID);
+  const targetLinks = getSourceLinks(targetNode, links, getNodeID);
+  hasNonCircular = targetLinks.some((l) => !l.circular);
+
+  return !hasNonCircular;
+};
 
 export function getColumn(node: Node) {
   return node.column ?? node.col;

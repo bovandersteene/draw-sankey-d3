@@ -33,6 +33,8 @@ export function selectCircularLinkTypes(
               numberOfTops < numberOfBottoms ? "top" : "bottom";
           }
 
+          console.log(link.circularLinkType);
+
           if (link.circularLinkType == "top") {
             numberOfTops = numberOfTops + 1;
           } else {
@@ -54,11 +56,13 @@ export function selectCircularLinkTypes(
         if (link.circular) {
           //if both source and target node are same type, then link should have same type
           if (sourceNode.circularLinkType == targetNode.circularLinkType) {
-            link.circularLinkType = sourceNode.circularLinkType;
+            link.circularLinkType =
+              sourceNode.circularLinkType ?? link.circularLinkType;
           }
           //if link is selflinking, then link should have same type as node
           if (getNodeID(targetNode) === getNodeID(sourceNode)) {
-            link.circularLinkType = sourceNode.circularLinkType;
+            link.circularLinkType =
+              sourceNode.circularLinkType ?? link.circularLinkType;
           }
         }
 
