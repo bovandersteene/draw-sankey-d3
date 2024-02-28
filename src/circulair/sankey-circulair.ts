@@ -75,10 +75,8 @@ class GraphSetup<NODE_TYPE extends Node = Node, LINK_TYPE extends Link = Link>
     this.graph = selectCircularLinkTypes(this.graph, this);
     this.graph = computeNodeValues(this.graph, this);
     this.graph = computeNodeDepths(this.graph, this);
-    // this.graph = createVirtualNodes(this.graph, this);
+    this.graph = createVirtualNodes(this.graph, this);
     this.graph = adjustSankeySize(this.graph, this);
-    console.table(this.graph.nodes);
-    console.table(this.graph.links);
     this.graph = computeNodeBreadths(this.graph, this);
     this.graph = resolveCollisionsAndRelax(this.graph, this);
     this.graph = computeLinkBreadths(this.graph, this);

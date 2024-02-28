@@ -9,7 +9,7 @@ export type GraphArrow = {
   headSize: string;
 };
 
-export type SankeyData = Omit<GraphData, "replacedLinks" | "ky">;
+export type SankeyData = Pick<GraphData, "links" | "nodes">;
 
 export type GraphData<
   NODE_TYPE extends Node = Node,

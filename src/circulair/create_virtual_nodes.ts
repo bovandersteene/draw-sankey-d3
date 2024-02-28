@@ -17,13 +17,21 @@ const createReplacedLinks = (
   virtualLinkIndex: number,
   { getNodeID }: Pick<Graph, "getNodeID">
 ) => {
-  const links = [];
-  const nodes = [];
+  const links: Link[] = [];
+  const nodes: Node[] = [];
   links.push({ ...link, type: "replaced" });
 
   let totalToCreate = targetNode.column - sourceNode.column - 1;
   //console.log("total nodes to create: " + totalToCreate);
-
+  console.log(
+    "create v nodes",
+    targetNode.name,
+    targetNode.column,
+    sourceNode.column,
+    sourceNode.name,
+    totalToCreate,
+    virtualNodeIndex
+  );
   for (var n = 0; n < totalToCreate; n++) {
     let newNode = {} as Node;
 
@@ -43,8 +51,8 @@ const createReplacedLinks = (
     newNode.column = sourceNode.column + (n + 1);
     newNode.virtual = true;
     newNode.replacedLink = link.index;
-
-    // nodes.push(newNode);
+    console.log(newNode.name);
+    nodes.push(newNode);
 
     let newLink = {} as Link;
     let vMinus1 = virtualNodeIndex - 1;
@@ -60,7 +68,7 @@ const createReplacedLinks = (
 
     //console.log(newLink);
 
-    // links.push(newLink);
+    links.push(newLink);
   }
 
   let lastLink = {} as Link;
@@ -77,7 +85,7 @@ const createReplacedLinks = (
 
   //console.log(lastLink);
 
-  // links.push(lastLink);
+  links.push(lastLink);
 
   return { links, nodes, virtualLinkIndex, virtualNodeIndex };
 };
@@ -121,7 +129,6 @@ export const createVirtualNodes = (
 
         links.push(...replaced.links);
         nodes.push(...replaced.nodes);
-        console.log(links.length, nodes.length);
         virtualLinkIndex = replaced.virtualLinkIndex;
         virtualNodeIndex = replaced.virtualNodeIndex;
       }
@@ -129,43 +136,13 @@ export const createVirtualNodes = (
 
     //console.log(graph.links);
 
-    links = inputGraph.links.map((link, i) => {
+    links = links.map((link, i) => {
       if (link.type == "virtual") {
         return addIndexToLink(link, null, nodes, settings);
       }
       return link;
     });
-
-    // let l = links.length;
-    // while (l--) {
-    //   if (links[l].type == "replaced") {
-    //     let obj = cloneDeep(links[l]);
-    //     links.splice(l, 1);
-    //     replacedLinks.push(obj);
-    //   }
-    // }
-
-    // console.log(nodes);
-    // nodes.forEach(function (node) {
-    //   const sourceLinks = getSourceLinks(node, links, getNodeID);
-    //   let sIndex = sourceLinks.length;
-    //   while (sIndex--) {
-    //     if (sourceLinks[sIndex].type == "replaced") {
-    //       // sourceLinks.splice(sIndex, 1);
-    //     }
-    //   }
-
-    //   const targetLinks = getTargetLinks(node, links, getNodeID);
-    //   let tIndex = targetLinks.length;
-    //   while (tIndex--) {
-    //     if (targetLinks[tIndex].type == "replaced") {
-    //       // targetLinks.splice(tIndex, 1);
-    //     }
-    //   }
-    // });
   }
-
-  console.log("links", links.length, "nodes", nodes.length);
 
   return {
     ...inputGraph,

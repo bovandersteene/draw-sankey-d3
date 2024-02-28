@@ -14,8 +14,6 @@ type Margin = { top: number; left: number; right: number; bottom: number };
 
 const getMinVal = (nodes: Node[], sankey: SankeyParams, py: number) => {
   const sumNodes = sumBy(nodes, (d: Node) => d.value ?? 0);
-  console.log(sankey.extend.y1 - sankey.extend.y0 - (nodes.length - 1) * py);
-  console.log(sumNodes);
   return (
     (sankey.extend.y1 - sankey.extend.y0 - (nodes.length - 1) * py) / sumNodes
   );
@@ -50,7 +48,6 @@ const calculateMargin = (
 
   links.forEach((link) => {
     const linkWidth = getWidth(link, ky);
-    console.log("linkWidth", linkWidth);
     if (link.circular) {
       if (link.circularLinkType == "top") {
         totalTopLinksWidth = totalTopLinksWidth + linkWidth;
@@ -91,8 +88,6 @@ const calculateGraphDimsions = (
   const scaleX = currentWidth / newWidth;
   const scaleY = currentHeight / newHeight;
 
-  console.log("h", currentHeight, newHeight, margin);
-
   const x0 = graph.x0 * scaleX + margin.left;
   const x1 = margin.right == 0 ? graph.x1 : graph.x1 * scaleX;
   const y0 = graph.y0 * scaleY + margin.top;
@@ -112,9 +107,6 @@ const calculateNodeSize = <NODE_TYPE extends Node>(
   const mCol = maxColumn ?? 1;
   const nodeX0 = x0 + column * ((x1 - x0 - nodeWidth) / mCol);
   const nodeX1 = nodeX0 + (nodeWidth ?? 10);
-
-  console.log(graph);
-  console.log(node.name, nodeX0, nodeX1, column, x0, x1, mCol);
 
   return { ...node, x0: nodeX0, x1: nodeX1, width: nodeWidth };
 };
@@ -157,11 +149,8 @@ export const adjustSankeySize = (
     calculateNodeSize(graphDimensions, node, sankey, maxColumn)
   );
 
-  console.log({ ky, py, scaleY: graphDimensions.scaleY });
   //re-calculate widths
   ky = ky * graphDimensions.scaleY;
-  console.log(ky);
-
   const links = inputGraph.links.map((link) => {
     return { ...link, width: getWidth(link, ky) };
   });
