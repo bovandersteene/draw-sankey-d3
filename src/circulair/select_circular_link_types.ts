@@ -33,8 +33,6 @@ export function selectCircularLinkTypes(
               numberOfTops < numberOfBottoms ? "top" : "bottom";
           }
 
-          console.log(link.circularLinkType);
-
           if (link.circularLinkType == "top") {
             numberOfTops = numberOfTops + 1;
           } else {

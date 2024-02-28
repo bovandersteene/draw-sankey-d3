@@ -126,7 +126,6 @@ export const computeCircularPathData = (
     selfLinking(link, getNodeID) &&
     onlyCircularLink(link, links, nodes, getNodeID)
   ) {
-    console.log("only self linking");
     circularPathData.leftSmallArcRadius = baseRadius + link.width / 2;
     circularPathData.leftLargeArcRadius = baseRadius + link.width / 2;
     circularPathData.rightSmallArcRadius = baseRadius + link.width / 2;
@@ -206,7 +205,6 @@ export const computeCircularPathData = (
       radiusOffset = radiusOffset + l.width;
     });
 
-    console.log("verticalBuffer", circularPathData.verticalBuffer);
     // bottom links
     if (link.circularLinkType == "bottom") {
       circularPathData.verticalFullExtent =

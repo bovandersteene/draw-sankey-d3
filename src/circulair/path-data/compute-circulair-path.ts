@@ -11,9 +11,6 @@ export const computeCircularPathString = (link: Link) => {
     return null;
   }
 
-  console.log(link.circularLinkType);
-  console.table(circularPathData);
-
   if (link.circularLinkType == "top") {
     // start at the right of the source node
     return (
