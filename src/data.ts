@@ -415,7 +415,7 @@ export const data1 = {
   py: 0,
 };
 
-let data3 = {
+const data3 = {
   nodes: [
     { name: "Oceans" },
     { name: "Evaporation" },
@@ -547,7 +547,7 @@ export const data4 = {
 };
 
 //to test self-linking nodes
-let data5 = {
+const data5 = {
   nodes: [
     { name: "startA" },
     { name: "startB" },
@@ -617,7 +617,7 @@ let data5 = {
 };
 
 //the big mockData to test relaxLeftAndRight
-let data6 = {
+const data6 = {
   nodes: [
     {
       name: "label0",

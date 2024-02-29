@@ -1,32 +1,29 @@
 // Populate the sourceLinks and targetLinks for each node.
 
-import { Graph, GraphData } from "./model";
-import { cloneDeep } from "lodash";
-import { _typeof } from "./utils";
+import { Graph, GraphData } from "../model";
 
 import findCircuits from "elementary-circuits-directed-graph";
 
 export const identifyCircles = (
-  inputGraph: GraphData,
-  { sortNodes, getNodeID }: Pick<Graph, "sortNodes" | "getNodeID">
+  graph: Readonly<Graph<any, any>>
 ): GraphData => {
-  let graph = cloneDeep(inputGraph);
-
-  var circularLinkID = 0;
-  if (sortNodes === null || sortNodes(graph.nodes[0]) === undefined) {
+  const { sortNodes, graph: data } = graph;
+  let circularLinkID = 0;
+  if (sortNodes === null) {
     // Building adjacency graph
     const adjList: number[][] = [];
-    for (var i = 0; i < graph.links.length; i++) {
-      const link = graph.links[i];
-      const source = link.sourceIndex;
-      const target = link.targetIndex;
+
+    data.forEachLink((link) => {
+      const { source: s, target: t } = data.getNodeLinks(link);
+      const source = s.index as number;
+      const target = t.index as number;
 
       if (!adjList[source]) adjList[source] = [];
       if (!adjList[target]) adjList[target] = [];
 
       // Add links if not already in set
       if (adjList[source].indexOf(target) === -1) adjList[source].push(target);
-    }
+    });
 
     // Find all elementary circuits
     const cycles = findCircuits(adjList);
@@ -37,16 +34,17 @@ export const identifyCircles = (
     });
 
     const circularLinks = {};
-    for (i = 0; i < cycles.length; i++) {
+    for (let i = 0; i < cycles.length; i++) {
       const cycle = cycles[i];
       const last = cycle.slice(-2);
       if (!circularLinks[last[0]]) circularLinks[last[0]] = {};
       circularLinks[last[0]][last[1]] = true;
     }
 
-    graph.links.forEach((link) => {
-      const source = link.sourceIndex;
-      const target = link.targetIndex;
+    data.forEachLink((link) => {
+      const { source: s, target: t } = data.getNodeLinks(link);
+      const source = s.index as number;
+      const target = t.index as number;
       // If self-linking or a back-edge
       if (
         target === source ||
@@ -60,17 +58,19 @@ export const identifyCircles = (
       }
     });
   } else {
-    graph.links.forEach(function (link) {
-      //if (link.source[sortNodes] < link.target[sortNodes]) {
-      if (sortNodes(link.source) < sortNodes(link.target)) {
-        link.circular = false;
-      } else {
-        link.circular = true;
-        link.circularLinkID = circularLinkID;
-        circularLinkID = circularLinkID + 1;
-      }
-    });
+    // data.linkIds.forEach((linkId) => {
+    //   const link = getLink(linkId, data.linkMap);
+    //   //if (link.source[sortNodes] < link.target[sortNodes]) {
+    //   if (sortNodes(link.source) < sortNodes(link.target)) {
+    //     link.circular = false;
+    //   } else {
+    //     link.circular = true;
+    //     link.circularLinkID = circularLinkID;
+    //     circularLinkID = circularLinkID + 1;
+    //   }
+    // });
+    console.warn("IMPLEMENT sort nodes");
   }
 
-  return graph;
+  return data;
 };

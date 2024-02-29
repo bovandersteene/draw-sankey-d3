@@ -1,27 +1,16 @@
 import { meanBy } from "lodash";
-import { computeColumns } from "./compute_columns";
-import { Graph, GraphData } from "./model";
-import {
-  ascendingBreadth,
-  findNode,
-  nodeCenter,
-  numberOfNonSelfLinkingCycles,
-} from "./utils";
-import * as d3 from "d3";
-import {
-  findSourceNode,
-  findTargetNode,
-  getSourceLinks,
-  getTargetLinks,
-} from "./utils/links";
-export const resolveCollisionsAndRelax = (
-  inputGraph: Readonly<GraphData>,
-  { sankey, getNodeID }: Pick<Graph, "sankey" | "getNodeID">
-): GraphData => {
-  const { iterations, nodePadding, minNodePadding } = sankey;
-  const columns = computeColumns(inputGraph);
+import { Graph } from "../model";
+import { nodeCenter } from "../utils/node";
+import { numberOfNonSelfLinkingCycles } from "../utils/self-linking";
+import { ascendingBreadth } from "../utils/breath";
 
-  for (var alpha = 1, n = iterations; n > 0; --n) {
+export const resolveCollisionsAndRelax = (graph: Graph<any, any>) => {
+  const { iterations, nodePadding, minNodePadding } = graph.sankey;
+  const data = graph.graph;
+  const columns = data.computeColumns();
+  const { extend } = data;
+
+  for (let alpha = 1, n = iterations; n > 0; --n) {
     relaxLeftAndRight((alpha *= 0.99));
     resolveCollisions();
   }
@@ -29,40 +18,38 @@ export const resolveCollisionsAndRelax = (
   // For each node in each column, check the node's vertical position in relation to its targets and sources vertical position
   // and shift up/down to be closer to the vertical middle of those targets and sources
   function relaxLeftAndRight(alpha: number) {
-    var columnsLength = columns.length;
+    const columnsLength = columns.length;
 
     columns.forEach(function (nodes) {
-      var n = nodes.length;
-      var depth = nodes[0].depth;
+      const n = nodes.length;
+      const depth = nodes[0].depth;
 
       nodes.forEach(function (node) {
         // check the node is not an orphan
         let nodeHeight;
-        const sourceLinks = getSourceLinks(node, inputGraph.links, getNodeID);
-        const targetLinks = getTargetLinks(node, inputGraph.links, getNodeID);
+        const sourceLinks = data.getSourceLinks(node);
+        const targetLinks = data.getTargetLinks(node);
+
         if (sourceLinks.length || targetLinks.length) {
-          if (
-            node.partOfCycle &&
-            numberOfNonSelfLinkingCycles(node, inputGraph.links, getNodeID) > 0
-          );
+          if (node.partOfCycle && numberOfNonSelfLinkingCycles(node, data) > 0);
           else if (depth == 0 && n == 1) {
             nodeHeight = node.y1 - node.y0;
 
-            node.y0 = inputGraph.y1 / 2 - nodeHeight / 2;
-            node.y1 = inputGraph.y1 / 2 + nodeHeight / 2;
+            node.y0 = extend.y1 / 2 - nodeHeight / 2;
+            node.y1 = extend.y1 / 2 + nodeHeight / 2;
           } else if (depth == columnsLength - 1 && n == 1) {
             nodeHeight = node.y1 - node.y0;
 
-            node.y0 = inputGraph.y1 / 2 - nodeHeight / 2;
-            node.y1 = inputGraph.y1 / 2 + nodeHeight / 2;
+            node.y0 = extend.y1 / 2 - nodeHeight / 2;
+            node.y1 = extend.y1 / 2 + nodeHeight / 2;
           } else {
             let avg = 0;
 
-            let avgTargetY = meanBy(sourceLinks, (link) =>
-              nodeCenter(findSourceNode(link, nodes, getNodeID))
+            const avgTargetY = meanBy(sourceLinks, (link) =>
+              nodeCenter(data.getNodeSource(link))
             );
-            let avgSourceY = meanBy(targetLinks, (link) =>
-              nodeCenter(findTargetNode(link, nodes, getNodeID))
+            const avgSourceY = meanBy(targetLinks, (link) =>
+              nodeCenter(data.getNodeTarget(link))
             );
 
             if (avgTargetY && avgSourceY) {
@@ -71,7 +58,7 @@ export const resolveCollisionsAndRelax = (
               avg = avgTargetY || avgSourceY;
             }
 
-            let dy = (avg - nodeCenter(node)) * alpha;
+            const dy = (avg - nodeCenter(node)) * alpha;
             // positive if it node needs to move down
             node.y0 += dy;
             node.y1 += dy;
@@ -84,9 +71,9 @@ export const resolveCollisionsAndRelax = (
   // For each column, check if nodes are overlapping, and if so, shift up/down
   function resolveCollisions() {
     columns.forEach((nodes) => {
-      var node,
+      let node,
         dy,
-        y = inputGraph.y0,
+        y = data.y0,
         n = nodes.length,
         i;
 
@@ -105,7 +92,7 @@ export const resolveCollisionsAndRelax = (
       }
 
       // If the bottommost node goes outside the bounds, push it back up.
-      dy = y - nodePadding - inputGraph.y1;
+      dy = y - nodePadding - data.y1;
       if (dy > 0) {
         (y = node.y0 -= dy), (node.y1 -= dy);
 
@@ -120,5 +107,5 @@ export const resolveCollisionsAndRelax = (
     });
   }
 
-  return inputGraph;
+  return data;
 };

@@ -19,19 +19,52 @@ export type SankeyData<
   nodes: NODE_TYPE[];
 };
 
-export type GraphData<
-  NODE_TYPE extends Node = Node,
-  LINK_TYPE extends Link = Link
-> = {
-  links: LINK_TYPE[];
-  nodes: NODE_TYPE[];
+export type GraphExtend = {
   x0: number;
   y0: number;
   x1: number;
   y1: number;
   py: number;
-  replacedLinks: any[];
   ky: number;
+};
+export type GraphData<
+  NODE_TYPE extends Node = Node,
+  LINK_TYPE extends Link = Link
+> = {
+  // links: LINK_TYPE[];
+  // nodes: NODE_TYPE[];
+
+  replacedLinks: any[];
+  extend: GraphExtend;
+  setExtendValue(key: keyof GraphExtend, value: number): void;
+  getNodeLinks(link: Link): { source: NODE_TYPE; target: NODE_TYPE };
+  getNodeSource(link: Link): NODE_TYPE;
+  getNodeTarget(link: Link): NODE_TYPE;
+  getTargetLinks(node: NODE_TYPE): LINK_TYPE[];
+  getSourceLinks(node: NODE_TYPE): LINK_TYPE[];
+  forEachNode(fnc: (node: NODE_TYPE) => void): void;
+  forEachLink(fnc: (node: LINK_TYPE) => void): void;
+  totalLinks(key: "sourceLinkMap" | "targetLinkMap", node: Node): number;
+  getLink(linkId: string): LINK_TYPE;
+  getNode(nodeId: string): NODE_TYPE;
+
+  getLinks(): LINK_TYPE[];
+  getNodes(): NODE_TYPE[];
+  addNode(_id: string, node: Node): void;
+  addLink(link: Link): void;
+
+  removeLinksFromIndex(type: string): void;
+
+  computeColumns(): Node[][];
+  maxColumns(): number;
+
+  getMinY(): number;
+  filterLinks(predicate: (link: Link) => boolean): LINK_TYPE[];
+  sameColumnLinks(
+    getNode: (link: Link) => Node,
+    column: number,
+    circularLinkType: CircularLinkType | undefined
+  ): LINK_TYPE[];
 };
 
 export type SankeyParams = {
@@ -51,33 +84,37 @@ export type SankeyParams = {
 export type CircularLinkType = "top" | "bottom";
 
 export type Link = {
+  // internal link id
+  _id: string;
+
   circular?: boolean;
   circularLinkType?: CircularLinkType;
   width: number;
   target: string;
   source: string;
-  targetIndex: NodeIndex;
-  sourceIndex: NodeIndex;
-  value?: number;
+  value: number;
   type: string;
   x0: number;
   y0: number;
   x1: number;
   y1: number;
-  index: number | string;
+  index: number;
   circularLinkID?: number;
-  circularPathData: any;
+  circularPathData?: any;
   path: string | null;
   parentLink?: NodeIndex;
 };
 
 type NodeIndex = number | string;
 export type Node = {
+  // Internal id derived from getNodeId
+  _id: string;
+
   name: string;
   column: number;
   col?: number;
   values?: any[];
-  value?: number;
+  value: number;
   circular?: boolean;
   circularLinkType?: CircularLinkType;
   partOfCycle?: boolean;
@@ -92,8 +129,6 @@ export type Node = {
   virtual?: boolean;
   // Replaced link index
   replacedLink?: NodeIndex;
-  // sourceLinks: Link[];
-  // targetLinks: Link[];
 };
 
 export type Graph<
@@ -105,7 +140,7 @@ export type Graph<
   height: number;
   graph: GraphData<NODE_TYPE, LINK_TYPE>;
   nodeColor: (d: NODE_TYPE) => string;
-  getNodeID: (d: NODE_TYPE) => string;
+  getNodeID: (d: any) => string;
   sortNodes: ((d: NODE_TYPE) => any) | null;
   setNodePositions?: boolean;
   sankey: SankeyParams;

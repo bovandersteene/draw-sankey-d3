@@ -1,8 +1,6 @@
 import { linkHorizontal } from "d3-shape";
-import { Graph, GraphData, Link, Node } from "../model";
-import { findSourceNode, findTargetNode } from "../utils/links";
+import { Graph, Link, Node } from "../model";
 import { computeCircularPathString } from "./compute-circulair-path";
-import { minBy } from "lodash";
 import {
   calcVerticalBuffer,
   computeCircularPathData,
@@ -15,61 +13,47 @@ const computeNormalPath = (
 ) => {
   const normalPath = linkHorizontal()
     .source((d: any) => {
-      var x = source.x0 + (source.x1 - source.x0);
-      var y = d.y0;
+      const x = source.x0 + (source.x1 - source.x0);
+      const y = d.y0;
       return [x, y];
     })
     .target((d: any) => {
-      var x = target.x0;
-      var y = d.y1;
+      const x = target.x0;
+      const y = d.y1;
       return [x, y];
     });
 
   return normalPath(link as any);
 };
 
-export const computeLinkPaths = (
-  inputGraph: Readonly<GraphData>,
-  settings: Graph
-) => {
-  const { getNodeID } = settings;
-  const nodes = inputGraph.nodes;
-  let links = inputGraph.links;
-  const minY =
-    minBy(links, (link: Link) => {
-      const source = findSourceNode(link, inputGraph.nodes, getNodeID);
-      return source.y0;
-    })?.y0 ?? 0;
+export const computeLinkPaths = (graph: Graph<any, any>) => {
+  const { graph: data } = graph;
+  const minY = data.getMinY();
 
   // calc vertical offsets per top/bottom links
-  const topLinks = links.filter((l: Link) => l.circularLinkType == "top");
-  /* topLinks = */ calcVerticalBuffer(topLinks, nodes, settings);
+  const topLinks = data.filterLinks((l: Link) => l.circularLinkType == "top");
+  /* topLinks = */ calcVerticalBuffer(topLinks, graph, data);
 
-  const bottomLinks = links.filter((l: Link) => l.circularLinkType == "bottom");
+  const bottomLinks = data.filterLinks(
+    (l: Link) => l.circularLinkType == "bottom"
+  );
 
-  /* bottomLinks = */ calcVerticalBuffer(bottomLinks, nodes, settings);
+  /* bottomLinks = */ calcVerticalBuffer(bottomLinks, graph, data);
 
-  links = links.map((link: Link) => {
-    let path: string | null = "";
-    const { getNodeID } = settings;
-    const source = findSourceNode(link, nodes, getNodeID);
-    const target = findTargetNode(link, nodes, getNodeID);
+  data.forEachLink((link: Link) => {
+    const { source, target } = data.getNodeLinks(link);
     if (link.circular) {
       link.circularPathData = computeCircularPathData(
         link,
         source,
         target,
-        nodes,
-        inputGraph.links,
-        settings,
+        data,
+        graph,
         minY
       );
-      path = computeCircularPathString(link);
+      link.path = computeCircularPathString(link);
     } else {
-      path = computeNormalPath(link, source, target);
+      link.path = computeNormalPath(link, source, target);
     }
-
-    return { ...link, path };
   });
-  return { ...inputGraph, links };
 };

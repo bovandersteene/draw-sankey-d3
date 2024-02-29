@@ -1,6 +1,5 @@
-import { Graph, Link, Node } from "../model";
-import { onlyCircularLink, selfLinking } from "../utils";
-import { findSourceNode, findTargetNode } from "../utils/links";
+import { Graph, GraphData, Link, Node } from "../model";
+import { onlyCircularLink, selfLinking } from "../utils/self-linking";
 function sortLinkSourceYDescending(link1: Link, link2: Link) {
   return link2.y0 - link1.y0;
 } // sort ascending links by their target vertical position, y1
@@ -15,25 +14,17 @@ function sortLinkTargetYDescending(link1: Link, link2: Link) {
 }
 
 // return the distance between the link's target and source node, in terms of the nodes' column
-function linkColumnDistance(
-  link: Link,
-  nodes: Node[],
-  getNodeID: (node: any) => string
-) {
-  const source = findSourceNode(link, nodes, getNodeID);
-  const target = findTargetNode(link, nodes, getNodeID);
+function linkColumnDistance(link: Link, graph: GraphData) {
+  const { source, target } = graph.getNodeLinks(link);
   return target.column - source.column;
 }
 
 // sort links based on the distance between the source and tartget node columns
 // if the same, then use Y position of the source node
-function sortLinkColumnAscending(
-  nodes: Node[],
-  getNodeID: (node: any) => string
-) {
+function sortLinkColumnAscending(graph: GraphData) {
   return (link1: Link, link2: Link) => {
-    const distance1 = linkColumnDistance(link1, nodes, getNodeID);
-    const distance2 = linkColumnDistance(link2, nodes, getNodeID);
+    const distance1 = linkColumnDistance(link1, graph);
+    const distance2 = linkColumnDistance(link2, graph);
     if (distance1 === distance2) {
       return link1.circularLinkType == "bottom"
         ? sortLinkSourceYDescending(link1, link2)
@@ -43,16 +34,9 @@ function sortLinkColumnAscending(
     }
   };
 }
-function circularLinksCross(
-  link1: Link,
-  link2: Link,
-  nodes: Node[],
-  getNodeID: (node: any) => string
-) {
-  const l1Source = findSourceNode(link1, nodes, getNodeID);
-  const l1Target = findTargetNode(link1, nodes, getNodeID);
-  const l2Target = findTargetNode(link2, nodes, getNodeID);
-  const l2Source = findSourceNode(link2, nodes, getNodeID);
+function circularLinksCross(link1: Link, link2: Link, graph: GraphData) {
+  const { source: l1Source, target: l1Target } = graph.getNodeLinks(link1);
+  const { source: l2Target, target: l2Source } = graph.getNodeLinks(link2);
   if (l1Source.column < l2Target.column) {
     return false;
   } else if (l1Target.column > l2Source.column) {
@@ -64,25 +48,22 @@ function circularLinksCross(
 
 export const calcVerticalBuffer = (
   links: Link[],
-  nodes: Node[],
-  { getNodeID, sankey }: Pick<Graph, "getNodeID" | "sankey">
+  { sankey }: Pick<Graph, "sankey">,
+  graph: GraphData
 ) => {
   const { circularLinkGap } = sankey;
 
-  links.sort(sortLinkColumnAscending(nodes, getNodeID));
+  links.sort(sortLinkColumnAscending(graph));
   links.forEach(function (link, i) {
-    var buffer = 0;
+    let buffer = 0;
     link.circularPathData = link.circularPathData ?? {};
-    if (
-      selfLinking(link, getNodeID) &&
-      onlyCircularLink(link, links, nodes, getNodeID)
-    ) {
+    if (selfLinking(link) && onlyCircularLink(link, graph)) {
       link.circularPathData.verticalBuffer = buffer + link.width / 2;
     } else {
-      var j = 0;
+      let j = 0;
       for (j; j < i; j++) {
-        if (circularLinksCross(links[i], links[j], nodes, getNodeID)) {
-          var bufferOverThisLink =
+        if (circularLinksCross(links[i], links[j], graph)) {
+          const bufferOverThisLink =
             links[j].circularPathData.verticalBuffer +
             links[j].width / 2 +
             circularLinkGap;
@@ -102,9 +83,8 @@ export const computeCircularPathData = (
   link: Readonly<Link>,
   source: Readonly<Node>,
   target: Readonly<Node>,
-  nodes: Node[],
-  links: Link[],
-  { getNodeID, sankey }: Pick<Graph, "getNodeID" | "sankey">,
+  graph: GraphData,
+  { sankey }: Pick<Graph, "sankey">,
   minY: number,
   buffer = 5
 ) => {
@@ -119,13 +99,10 @@ export const computeCircularPathData = (
   circularPathData.sourceY = link.y0;
   circularPathData.targetY = link.y1;
 
-  let y1 = 0;
+  const y1 = 0;
 
   // for self linking paths, and that the only circular link in/out of that node
-  if (
-    selfLinking(link, getNodeID) &&
-    onlyCircularLink(link, links, nodes, getNodeID)
-  ) {
+  if (selfLinking(link) && onlyCircularLink(link, graph)) {
     circularPathData.leftSmallArcRadius = baseRadius + link.width / 2;
     circularPathData.leftLargeArcRadius = baseRadius + link.width / 2;
     circularPathData.rightSmallArcRadius = baseRadius + link.width / 2;
@@ -154,14 +131,13 @@ export const computeCircularPathData = (
   } else {
     // else calculate normally
     // add left extent coordinates, based on links with same source column and circularLink type
-    var thisColumn = source.column;
-    var thisCircularLinkType = link.circularLinkType;
-    var sameColumnLinks = links.filter((l) => {
-      return (
-        source.column == thisColumn &&
-        l.circularLinkType == thisCircularLinkType
-      );
-    });
+    // var thisColumn = source.column;
+    //var thisCircularLinkType = link.circularLinkType;
+    let sameColumnLinks = graph.sameColumnLinks(
+      () => source,
+      source.column,
+      link.circularLinkType
+    );
 
     if (link.circularLinkType == "bottom") {
       sameColumnLinks.sort(sortLinkSourceYDescending);
@@ -169,7 +145,7 @@ export const computeCircularPathData = (
       sameColumnLinks.sort(sortLinkSourceYAscending);
     }
 
-    var radiusOffset = 0;
+    let radiusOffset = 0;
     sameColumnLinks.forEach(function (l, i) {
       if (l.circularLinkID == link.circularLinkID) {
         circularPathData.leftSmallArcRadius =
@@ -181,13 +157,12 @@ export const computeCircularPathData = (
     });
 
     // add right extent coordinates, based on links with same target column and circularLink type
-    thisColumn = target.column;
-    sameColumnLinks = links.filter(function (l) {
-      const t = findTargetNode(l, nodes, getNodeID);
-      return (
-        t.column == thisColumn && l.circularLinkType == thisCircularLinkType
-      );
-    });
+    sameColumnLinks = graph.sameColumnLinks(
+      (link) => graph.getNodeTarget(link),
+      target.column,
+      link.circularLinkType
+    );
+
     if (link.circularLinkType == "bottom") {
       sameColumnLinks.sort(sortLinkTargetYDescending);
     } else {

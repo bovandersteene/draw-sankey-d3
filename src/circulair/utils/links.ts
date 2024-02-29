@@ -1,48 +1,30 @@
 import { Link, Node } from "../model";
 
-export const getSourceLinks = (
-  node: Node,
-  links: Link[],
-  getNodeID: (node: Node) => string
-): Link[] => {
-  const nodeId = getNodeID(node);
+export const getLink = (linkId: string, linkMap: Map<string, Link>): Link => {
+  const link = linkMap.get(linkId);
+  if (!link) throw new Error(`Link "${linkId}" not found`);
 
-  return links.filter((link) => nodeId === link.source);
+  return link;
 };
 
-export const getTargetLinks = (
-  node: Node,
-  links: Link[],
-  getNodeID: (node: Node) => string
-): Link[] => {
-  const nodeId = getNodeID(node);
-  return links.filter((link) => nodeId === link.target);
+export const getLinkInternalId = (link: Link) => {
+  return [link.source, link.target].join("_|_");
 };
 
-export const findSourceNode = (
-  link: Link,
-  nodes: Node[],
-  getNodeID: (node: Node) => string
-): Node => {
-  return findNode(link.source, nodes, getNodeID);
+export const getNodeLinks = (link: Link, nodes: Map<string, Node>) => {
+  const source = nodes.get(link.source);
+  if (!source) throw new Error(`Source Node "${link}" not found`);
+  const target = nodes.get(link.target);
+  if (!target) throw new Error(`Target Node "${link}" not found`);
+
+  return { source, target };
 };
+export function getWidth(link: Link, scale = 1) {
+  if (!link.value) return 1;
 
-export const findTargetNode = (
-  link: Link,
-  nodes: Node[],
-  getNodeID: (node: Node) => string
-): Node => {
-  return findNode(link.target, nodes, getNodeID);
-};
+  return link.value * (scale ?? 1);
+}
 
-export const findNode = (
-  id: string,
-  nodes: Node[],
-  getNodeID: (node: Node) => string
-): Node => {
-  const node = nodes.find((node) => getNodeID(node) === id);
-
-  if (!node) throw new Error(`Node "${id}" not found`);
-
-  return node;
-};
+export function getColumn(node: Node) {
+  return node.column ?? node.col;
+}

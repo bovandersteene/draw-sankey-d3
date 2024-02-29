@@ -1,29 +1,25 @@
-import { computeNodeLinks } from "./compute_node_links";
 import { drawSankey } from "./draw_sankey";
-import { identifyCircles } from "./identify_circulair_circles";
 import {
   DefaultGraph,
   Graph,
   GraphArrow,
-  GraphData,
   Link,
   Node,
   SankeyData,
   SankeyParams,
 } from "./model";
 
-import { selectCircularLinkTypes } from "./select_circular_link_types";
-import { computeNodeValues } from "./compute_node_values";
-import { computeNodeDepths } from "./compute_node_depths";
-import { adjustSankeySize } from "./adjust_sankey_size";
-import { computeNodeBreadths } from "./compute_node_breaths";
-import { createVirtualNodes } from "./create_virtual_nodes";
-import { pick } from "lodash";
-import { resolveCollisionsAndRelax } from "./resolve-collision";
-import { computeColumns } from "./compute_columns";
-import { computeLinkBreadths } from "./compute_link_breaths";
+import { selectCircularLinkTypes } from "./compute";
+import { computeNodeLinksInitial } from "./compute/1_compute-node-links";
+import { identifyCircles } from "./compute/2_identify_circulair_circles";
+import { computeNodeValues } from "./compute/4_compute_node_values";
+import { computeNodeDepths } from "./compute/5_compute_node_depths";
+import { createVirtualNodes } from "./virtual-nodes/create_virtual_nodes";
+import { adjustSankeySize } from "./compute/6_adjust_sankey_size";
+import { computeNodeBreadths } from "./compute/7_compute_node_breaths";
+import { resolveCollisionsAndRelax } from "./compute/8_resolve-collision";
+import { computeLinkBreadths } from "./compute/9_compute_link_breaths";
 import { computeLinkPaths } from "./path-data/compute_path";
-import { addCircularPathData } from "./add-circulair-path-data";
 
 /** Inspired on https://observablehq.com/@tomshanley/sankey-circular-deconstructed */
 
@@ -70,21 +66,24 @@ class GraphSetup<NODE_TYPE extends Node = Node, LINK_TYPE extends Link = Link>
   }
 
   draw(data: SankeyData) {
-    (this.graph = { ...data, ...this.sankey.extend, py: 0 } as GraphData), this;
-    this.graph = computeNodeLinks(this.graph, this);
-    this.graph = identifyCircles(this.graph, this);
-    this.graph = selectCircularLinkTypes(this.graph, this);
-    this.graph = computeNodeValues(this.graph, this);
-    this.graph = computeNodeDepths(this.graph, this);
-    this.graph = createVirtualNodes(this.graph, this);
-    this.graph = adjustSankeySize(this.graph, this);
-    this.graph = computeNodeBreadths(this.graph, this);
-    this.graph = resolveCollisionsAndRelax(this.graph, this);
-    this.graph = computeLinkBreadths(this.graph, this);
+    this.graph = computeNodeLinksInitial(data, this);
+    identifyCircles(this);
+    selectCircularLinkTypes(this);
+    computeNodeValues(this.graph);
+    computeNodeDepths(this);
+    // optional depending on the config
+    createVirtualNodes(this.graph, this);
+    adjustSankeySize(this);
+    computeNodeBreadths(this);
+    resolveCollisionsAndRelax(this);
+    computeLinkBreadths(this.graph);
+    // straigtenVirtualNodes(this.graph, this);
 
-    //straigtenVirtualNodes
+    computeLinkPaths(this);
 
-    this.graph = computeLinkPaths(this.graph, this);
+    console.table(this.graph.getNodes());
+    console.table(this.graph.getLinks());
+    console.table(this.graph.extend);
     return this;
   }
 }
@@ -106,7 +105,7 @@ export const drawSankeyCirculair = <
   // console.table(graphSetup.graph.nodes);
 
   const sankey = drawSankey(graphSetup);
-  console.log(documentId, sankey);
   document.getElementById(documentId)?.appendChild(sankey!);
+
   //d3.select(documentId).append(sankey as any);
 };

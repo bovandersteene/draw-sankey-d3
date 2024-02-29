@@ -1,4 +1,4 @@
-import { Graph, Link } from "../model";
+import { Link } from "../model";
 
 // create a d path using the addCircularPathData
 export const computeCircularPathString = (link: Link) => {

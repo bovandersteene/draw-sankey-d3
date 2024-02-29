@@ -1,12 +1,15 @@
-import { pick, sumBy } from "lodash";
-import { Graph, GraphData, Link, Node, SankeyParams } from "./model";
+import { sumBy } from "lodash";
+import {
+  Graph,
+  GraphData,
+  GraphExtend,
+  Link,
+  Node,
+  SankeyParams,
+} from "../model";
 
-import * as d3 from "d3";
-import { getColumn, getWidth } from "./utils";
-import { computeColumns } from "./compute_columns";
-import { findTargetNode } from "./utils/links";
-
-type GraphDimensions = Pick<GraphData, "x0" | "x1" | "y1" | "y0"> & {
+import { getWidth } from "../utils/links";
+type GraphDimensions = {
   scaleX: number;
   scaleY: number;
 };
@@ -34,34 +37,30 @@ const caclulateMarginValue = (
 };
 
 const calculateMargin = (
-  nodes: Node[],
-  links: Link[],
-  ky: number,
-  { sankey, getNodeID }: Pick<Graph<Node, Link>, "sankey" | "getNodeID">
+  graph: Readonly<GraphData>,
+  { sankey }: Pick<Graph<Node, Link>, "sankey">
 ): Margin => {
   let totalTopLinksWidth = 0,
     totalBottomLinksWidth = 0,
     totalRightLinksWidth = 0,
     totalLeftLinksWidth = 0;
 
-  const maxColumn = d3.max(nodes, getColumn);
+  const maxColumn = graph.maxColumns();
 
-  links.forEach((link) => {
-    const linkWidth = getWidth(link, ky);
+  graph.forEachLink((link: Link) => {
+    const linkWidth = getWidth(link, graph.extend.ky);
     if (link.circular) {
       if (link.circularLinkType == "top") {
         totalTopLinksWidth = totalTopLinksWidth + linkWidth;
       } else {
         totalBottomLinksWidth = totalBottomLinksWidth + linkWidth;
       }
-
-      const targetNode = findTargetNode(link, nodes, getNodeID);
-      if (getColumn(targetNode) == 0) {
+      const { target, source } = graph.getNodeLinks(link);
+      if (target.column == 0) {
         totalLeftLinksWidth = totalLeftLinksWidth + linkWidth;
       }
 
-      const sourceNode = findTargetNode(link, nodes, getNodeID);
-      if (getColumn(sourceNode) == maxColumn) {
+      if (source.column == maxColumn) {
         totalRightLinksWidth = totalRightLinksWidth + linkWidth;
       }
     }
@@ -79,8 +78,9 @@ const calculateGraphDimsions = (
   graph: Readonly<GraphData>,
   margin: Margin
 ): GraphDimensions => {
-  const currentWidth = graph.x1 - graph.x0;
-  const currentHeight = graph.y1 - graph.y0;
+  const { extend } = graph;
+  const currentWidth = extend.x1 - extend.x0;
+  const currentHeight = extend.y1 - extend.y0;
 
   const newWidth = currentWidth + margin.right + margin.left;
   const newHeight = currentHeight + margin.top + margin.bottom;
@@ -88,71 +88,76 @@ const calculateGraphDimsions = (
   const scaleX = currentWidth / newWidth;
   const scaleY = currentHeight / newHeight;
 
-  const x0 = graph.x0 * scaleX + margin.left;
-  const x1 = margin.right == 0 ? graph.x1 : graph.x1 * scaleX;
-  const y0 = graph.y0 * scaleY + margin.top;
-  const y1 = graph.y1 * scaleY;
-  return { x0, y0, y1, x1, scaleX, scaleY };
+  const x0 = extend.x0 * scaleX + margin.left;
+  const x1 = margin.right == 0 ? extend.x1 : extend.x1 * scaleX;
+  const y0 = extend.y0 * scaleY + margin.top;
+  const y1 = extend.y1 * scaleY;
+
+  graph.setExtendValue("x0", x0);
+  graph.setExtendValue("x1", x1);
+  graph.setExtendValue("y0", y0);
+  graph.setExtendValue("y1", y1);
+
+  return { scaleX, scaleY };
 };
 
 const calculateNodeSize = <NODE_TYPE extends Node>(
-  graph: GraphDimensions,
+  extend: GraphExtend,
   node: NODE_TYPE,
   { nodeWidth }: Pick<SankeyParams, "nodeWidth">,
   maxColumn: number
-): NODE_TYPE => {
-  const x0 = graph.x0 ?? 0;
-  const x1 = graph.x1 ?? 0;
-  const column = getColumn(node) ?? 0;
+): void => {
+  const x0 = extend.x0 ?? 0;
+  const x1 = extend.x1 ?? 0;
+  const column = node.column ?? 0;
   const mCol = maxColumn ?? 1;
   const nodeX0 = x0 + column * ((x1 - x0 - nodeWidth) / mCol);
   const nodeX1 = nodeX0 + (nodeWidth ?? 10);
 
-  return { ...node, x0: nodeX0, x1: nodeX1, width: nodeWidth };
+  node.x0 = nodeX0;
+  node.x1 = nodeX1;
+  node.width = nodeX1 - nodeX0;
+  // width: nodeWidth
 };
 
-export const adjustSankeySize = (
-  inputGraph: Readonly<GraphData>,
-  settings: Pick<Graph<Node, Link>, "sankey" | "getNodeID">
-) => {
-  const { sankey } = settings;
-  //  let graph = cloneDeep(inputGraph);
-  let py = inputGraph.py ?? 0;
+export const adjustSankeySize = (graph: Readonly<Graph<any, any>>) => {
+  const { sankey, graph: data } = graph;
+  const { extend } = data;
+  //  let graph = cloneDeep(data);
+  const py = extend.py ?? 0;
 
-  const columns = computeColumns(inputGraph);
-  const maxColumn = d3.max(inputGraph.nodes, getColumn) ?? 1;
+  const columns = data.computeColumns();
+  const maxColumn = data.maxColumns();
 
   //override py if nodePadding has been set
   if (sankey.paddingRatio) {
-    var padding = Infinity;
+    let padding = Infinity;
     columns.forEach((nodes: Node[]) => {
-      var thisPadding =
+      const thisPadding =
         (sankey.extend.y1 * sankey.paddingRatio) / (nodes.length + 1);
       padding = thisPadding < padding ? thisPadding : padding;
     });
-    py = padding;
+    data.setExtendValue("py", padding);
   } else {
-    py = sankey.nodePadding;
+    data.setExtendValue("py", sankey.nodePadding);
   }
+  console.log(columns, py, sankey);
+  data.setExtendValue("ky", getKy(columns, py, sankey));
 
-  let ky = getKy(columns, py, sankey);
+  const margin = calculateMargin(data, graph);
 
-  const margin = calculateMargin(
-    inputGraph.nodes,
-    inputGraph.links,
-    ky,
-    settings
-  );
+  const graphDimensions = calculateGraphDimsions(data, margin);
 
-  const graphDimensions = calculateGraphDimsions(inputGraph, margin);
-  const nodes = inputGraph.nodes.map((node) =>
-    calculateNodeSize(graphDimensions, node, sankey, maxColumn)
+  data.forEachNode((node: Node) =>
+    calculateNodeSize(data.extend, node, sankey, maxColumn)
   );
 
   //re-calculate widths
-  ky = ky * graphDimensions.scaleY;
-  const links = inputGraph.links.map((link) => {
-    return { ...link, width: getWidth(link, ky) };
+  data.setExtendValue("ky", extend.ky * graphDimensions.scaleY);
+
+  data.forEachLink((link: Link) => {
+    link.width = getWidth(link, extend.ky);
   });
-  return { ...inputGraph, nodes, links, ky, py, ...graphDimensions };
+
+  return data;
 };

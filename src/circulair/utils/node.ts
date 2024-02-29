@@ -1,19 +1,12 @@
-import { Link, Node, Graph } from "../model";
-import { findSourceNode, findTargetNode } from "./links";
+import { Node } from "../model";
 
-export const addIndexToLink = (
-  link: Link,
-  linkIndex: number | null,
-  nodes: Node[],
-  { getNodeID }: Pick<Graph, "getNodeID">
-) => {
-  let source = findSourceNode(link, nodes, getNodeID);
-  let target = findTargetNode(link, nodes, getNodeID);
+export const getNode = (nodeId: string, nodeMap: Map<string, Node>): Node => {
+  const node = nodeMap.get(nodeId);
+  if (!node) throw new Error(`Node "${nodeId}" not found`);
 
-  return {
-    ...link,
-    index: linkIndex ?? link.index,
-    sourceIndex: source.index,
-    targetIndex: target.index,
-  };
+  return node;
 };
+
+export function nodeCenter(node: Node) {
+  return (node.y0 + node.y1) / 2;
+}
