@@ -1,230 +1,111 @@
-import * as d3 from 'd3'
-import { type Graph, type GraphArrow, type Link, type Node } from './model'
+import * as d3 from "d3";
+import { type Graph, type GraphArrow, type Link, type Node } from "./model";
+import { drawNodes, mouseOutNode, mouseOverNode } from "./draw/node";
+import { drawLinks } from "./draw/link";
 
-function drawArrow (arrow: any, arrowSetup: GraphArrow) {
-  const totalDashArrayLength = arrowSetup.length + arrowSetup.gapLength
-  const thisPath = d3.select(arrow).node()
-  const parentG = d3.select(arrow.parentNode)
-  const pathLength = 1 // thisPath.getTotalLength();
-  let numberOfArrows = Math.ceil(pathLength / totalDashArrayLength)
+function drawArrow(arrow: any, arrowSetup: GraphArrow) {
+  const totalDashArrayLength = arrowSetup.length + arrowSetup.gapLength;
+  const thisPath = d3.select(arrow).node();
+  const parentG = d3.select(arrow.parentNode);
+  const pathLength = 1; // thisPath.getTotalLength();
+  let numberOfArrows = Math.ceil(pathLength / totalDashArrayLength);
   // remove the last arrow head if it will overlap the target node
   if (
     (numberOfArrows - 1) * totalDashArrayLength +
       (arrow.length + (arrow.headSize + 1)) >
     pathLength
   ) {
-    numberOfArrows = numberOfArrows - 1
+    numberOfArrows = numberOfArrows - 1;
   }
   const arrowHeadData = d3.range(numberOfArrows).map(function (d, i) {
-    const length = i * totalDashArrayLength + arrow.length
-    const point = thisPath.getPointAtLength(length)
-    const previousPoint = thisPath.getPointAtLength(length - 2)
-    let rotation = 0
+    const length = i * totalDashArrayLength + arrow.length;
+    const point = thisPath.getPointAtLength(length);
+    const previousPoint = thisPath.getPointAtLength(length - 2);
+    let rotation = 0;
     if (point.y === previousPoint.y) {
-      rotation = point.x < previousPoint.x ? 180 : 0
+      rotation = point.x < previousPoint.x ? 180 : 0;
     } else if (point.x === previousPoint.x) {
-      rotation = point.y < previousPoint.y ? -90 : 90
+      rotation = point.y < previousPoint.y ? -90 : 90;
     } else {
-      const adj = Math.abs(point.x - previousPoint.x)
-      const opp = Math.abs(point.y - previousPoint.y)
-      let angle = Math.atan(opp / adj) * (180 / Math.PI)
+      const adj = Math.abs(point.x - previousPoint.x);
+      const opp = Math.abs(point.y - previousPoint.y);
+      let angle = Math.atan(opp / adj) * (180 / Math.PI);
       if (point.x < previousPoint.x) {
-        angle = angle + (90 - angle) * 2
+        angle = angle + (90 - angle) * 2;
       }
       if (point.y < previousPoint.y) {
-        rotation = -angle
+        rotation = -angle;
       } else {
-        rotation = angle
+        rotation = angle;
       }
     }
-    return { x: point.x, y: point.y, rotation }
-  })
+    return { x: point.x, y: point.y, rotation };
+  });
   const arrowHeads = parentG
-    .selectAll('.arrow-heads')
+    .selectAll(".arrow-heads")
     .data(arrowHeadData)
     .enter()
-    .append('path')
-    .attr('d', function (d) {
+    .append("path")
+    .attr("d", function (d) {
       return (
-        'M' +
+        "M" +
         d.x +
-        ',' +
+        "," +
         (d.y - arrow.headSize / 2) +
-        ' ' +
-        'L' +
+        " " +
+        "L" +
         (d.x + arrow.headSize) +
-        ',' +
+        "," +
         d.y +
-        ' ' +
-        'L' +
+        " " +
+        "L" +
         d.x +
-        ',' +
+        "," +
         (d.y + arrow.headSize / 2)
-      )
+      );
     })
-    .attr('class', 'arrow-head')
-    .attr('transform', function (d) {
-      return 'rotate(' + d.rotation + ',' + d.x + ',' + d.y + ')'
+    .attr("class", "arrow-head")
+    .attr("transform", function (d) {
+      return "rotate(" + d.rotation + "," + d.x + "," + d.y + ")";
     })
-    .style('fill', arrow.color)
+    .style("fill", arrow.color);
 }
 
 const drawArrows = (arrowSetup: GraphArrow, linkG: any, links: Link[]) => {
   const arrowsG = linkG
     .data(links)
     .enter()
-    .append('g')
-    .attr('class', 'g-arrow')
+    .append("g")
+    .attr("class", "g-arrow");
   const arrows = arrowsG
-    .append('path')
-    .attr('d', arrowSetup.path)
-    .style('stroke-width', 1)
-    .style('stroke', arrowSetup.color)
-    .style('stroke-dasharray', arrowSetup.length + ',' + arrowSetup.gapLength)
+    .append("path")
+    .attr("d", arrowSetup.path)
+    .style("stroke-width", 1)
+    .style("stroke", arrowSetup.color)
+    .style("stroke-dasharray", arrowSetup.length + "," + arrowSetup.gapLength);
 
-  arrows.each((arrow) => { drawArrow(arrow, arrowSetup) })
-}
+  arrows.each((arrow) => {
+    drawArrow(arrow, arrowSetup);
+  });
+};
 
 export const drawSankey = <NODE_TYPE extends Node, LINK_TYPE extends Link>(
   graphSetup: Graph<NODE_TYPE, LINK_TYPE>
 ) => {
-  const nodes = graphSetup.graph.getNodes()
-  const links = graphSetup.graph.getLinks()
-  const { width, height, padding, graph, nodeColor, arrow } = graphSetup
+  const { width, height, padding, graph, nodeColor, arrow } = graphSetup;
   const svg = d3
-    .create('svg')
-    .attr('width', width + padding + padding)
-    .attr('height', height + padding + padding)
+    .create("svg")
+    .attr("width", width + padding + padding)
+    .attr("height", height + padding + padding);
 
   const g = svg
-    .append('g')
-    .attr('transform', 'translate(' + padding + ',' + padding + ')')
+    .append("g")
+    .attr("transform", "translate(" + padding + "," + padding + ")");
 
-  const linkG = g
-    .append('g')
-    .attr('class', 'links')
-    .attr('fill', 'none')
-    .attr('stroke-opacity', 0.2)
-    .selectAll('path')
 
-  const nodeG = g
-    .append('g')
-    .attr('class', 'nodes')
-    .attr('font-family', 'sans-serif')
-    .attr('font-size', 10)
-    .selectAll('g')
+  drawNodes(graphSetup, g, svg);
+  drawLinks(graphSetup, g, svg);
 
-  const node = nodeG.data(nodes).enter().append('g')
-
-  node
-    .append('rect')
-    .attr('x', function (d) {
-      return d.x0
-    })
-    .attr('y', function (d) {
-      return d.y0
-    })
-    .attr('height', function (d) {
-      return d.y1 - d.y0
-    })
-    .attr('width', function (d) {
-      return d.x1 - d.x0
-    })
-    .style('fill', nodeColor)
-    .style('stroke', 'grey')
-    .style('opacity', 0.5)
-    .on('mouseover', function (d) {
-      const thisName = d.name
-
-      node.selectAll('rect').style('opacity', function (d) {
-        return highlightNodes(d, thisName)
-      })
-
-      svg.selectAll('.sankey-link').style('opacity', function (l) {
-        return l.source === thisName || l.target === thisName ? 1 : 0.3
-      })
-
-      node.selectAll('text').style('opacity', function (d) {
-        return highlightNodes(d, thisName)
-      })
-    })
-    .on('mouseout', function (d) {
-      d3.selectAll('rect').style('opacity', 0.5)
-      d3.selectAll('.sankey-link').style('opacity', 0.7)
-      d3.selectAll('text').style('opacity', 1)
-    })
-
-  node
-    .append('text')
-    .attr('x', (d) => d.x0)
-    .attr('y', function (d) {
-      let y = d.y0 - 12
-      y = y < graph.y0 ? d.y1 + 12 : y
-      return y
-    })
-    .attr('dy', '0.35em')
-    .attr('text-anchor', 'middle')
-    .text(function (d) {
-      return d.name
-    })
-
-  node.append('title').text(function (d) {
-    return d.name + '\n' + d.value
-  })
-
-  const link = linkG.data(links).enter().append('g')
-
-  link
-    .filter((d) => d.path)
-    .append('path')
-    .attr('class', 'sankey-link')
-    .attr('d', function (link) {
-      return link.path
-    })
-    .style('stroke-width', function (d) {
-      return Math.max(1, d.width)
-    })
-    .style('opacity', 0.7)
-    .style('stroke', function (link, i) {
-      if (link.circular) {
-        return 'red'
-      } else if (link.type === 'virtual') {
-        return 'yellow'
-      } else if (link.type === 'replaced') {
-        return 'blue'
-      } else {
-        return 'black'
-      }
-      // return link.circular ? "red" : "black";
-    })
-
-  link.append('title').text(function (d) {
-    return d.source.name + ' → ' + d.target.name + '\n Index: ' + d.index
-  })
-
-  if (arrow && arrow.draw) {
-    drawArrows(arrow, linkG, graph.links)
-  }
-
-  function highlightNodes (node, name) {
-    let opacity = 0.3
-
-    if (node.name === name) {
-      opacity = 1
-    }
-    // node.sourceLinks.forEach(function (link) {
-    //   if (link.target.name===name) {
-    //     opacity = 1;
-    //   }
-    // });
-    // node.targetLinks.forEach(function (link) {
-    //   if (link.source.name===name) {
-    //     opacity = 1;
-    //   }
-    // });
-
-    return opacity
-  }
-
-  return svg.node()
-}
+  
+  return svg.node();
+};
