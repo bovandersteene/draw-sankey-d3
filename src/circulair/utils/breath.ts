@@ -20,7 +20,7 @@ export const ascendingSourceBreadth =
 
 export const ascendingTargetBreadth =
   (getNode: (nodeId: string) => Node) => (a: Link, b: Link) => {
-    const targetA = getNode(a.source);
-    const targetB = getNode(b.source);
+    const targetA = getNode(a.target);
+    const targetB = getNode(b.target);
     return ascendingBreadth(targetA, targetB) || a.index - b.index;
   };

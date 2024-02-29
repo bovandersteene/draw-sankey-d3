@@ -1,20 +1,19 @@
 import { GraphData, Graph } from "../model";
 
-export function straigtenVirtualNodes(
-  inputGraph: Readonly<GraphData>,
-  { useVirtualRoutes }: Pick<Graph, "useVirtualRoutes">
-) {
+export function straigtenVirtualNodes(graph: Readonly<Graph<any, any>>) {
+  const { useVirtualRoutes, graph: data } = graph;
   if (!useVirtualRoutes) return;
 
-  inputGraph.forEachNode(function (node) {
+  data.forEachNode((node) => {
     if (node.virtual) {
       const nodeHeight = node.y1 - node.y0;
       let dy = 0;
 
-      const sourceLinks = inputGraph.getSourceLinks(node);
-      const targetLinks = inputGraph.getTargetLinks(node);
-      const { source: firstSource, target: firstTarget } =
-        inputGraph.getNodeLinks(targetLinks[0]);
+      const sourceLinks = data.getSourceLinks(node);
+      const targetLinks = data.getTargetLinks(node);
+      const { source: firstSource, target: firstTarget } = data.getNodeLinks(
+        targetLinks[0]
+      );
       //if the node is linked to another virtual node, get the difference in y
       //select the node which precedes it first, else get the node after it
       if (firstSource.virtual) {
@@ -36,7 +35,5 @@ export function straigtenVirtualNodes(
         l.y0 = l.y0 + dy;
       });
     }
-
-    return inputGraph;
   });
 }

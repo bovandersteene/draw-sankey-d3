@@ -41,6 +41,9 @@ export type GraphData<
   getNodeSource(link: Link): NODE_TYPE;
   getNodeTarget(link: Link): NODE_TYPE;
   getTargetLinks(node: NODE_TYPE): LINK_TYPE[];
+  getNodeSourceLinks(node: NODE_TYPE): LINK_TYPE[];
+  getNodeTargetLinks(node: NODE_TYPE): LINK_TYPE[];
+  getTargetLinks(node: NODE_TYPE): LINK_TYPE[];
   getSourceLinks(node: NODE_TYPE): LINK_TYPE[];
   forEachNode(fnc: (node: NODE_TYPE) => void): void;
   forEachLink(fnc: (node: LINK_TYPE) => void): void;
@@ -54,6 +57,8 @@ export type GraphData<
   addLink(link: Link): void;
 
   removeLinksFromIndex(type: string): void;
+
+  removeVirtualNodesFromIndex(): void;
 
   computeColumns(): Node[][];
   maxColumns(): number;

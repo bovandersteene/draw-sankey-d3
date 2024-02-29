@@ -4,9 +4,7 @@ import { Graph, GraphData } from "../model";
 
 import findCircuits from "elementary-circuits-directed-graph";
 
-export const identifyCircles = (
-  graph: Readonly<Graph<any, any>>
-): GraphData => {
+export const identifyCircles = (graph: Readonly<Graph<any, any>>) => {
   const { sortNodes, graph: data } = graph;
   let circularLinkID = 0;
   if (sortNodes === null) {

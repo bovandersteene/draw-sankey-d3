@@ -61,19 +61,16 @@ const createReplacedLinks = (
   return { virtualLinkIndex, virtualNodeIndex };
 };
 
-export const createVirtualNodes = (
-  inputGraph: Readonly<GraphData>,
-  settings: Pick<Graph, "useVirtualRoutes">
-) => {
-  const { useVirtualRoutes } = settings;
+export const createVirtualNodes = (graph: Readonly<Graph<any, any>>) => {
+  const { useVirtualRoutes, graph: data } = graph;
 
   if (useVirtualRoutes) {
     let virtualNodeIndex = -1;
     let virtualLinkIndex = 0;
 
-    inputGraph.forEachLink((link: Link) => {
+    data.forEachLink((link: Link) => {
       const { target: targetNode, source: sourceNode } =
-        inputGraph.getNodeLinks(link);
+        data.getNodeLinks(link);
 
       if (
         !targetNode ||
@@ -83,7 +80,7 @@ export const createVirtualNodes = (
         link.type = "normal";
       } else {
         const replaced = createReplacedLinks(
-          inputGraph,
+          data,
           link,
           targetNode,
           sourceNode,
@@ -99,6 +96,5 @@ export const createVirtualNodes = (
     });
   }
 
-  inputGraph.removeLinksFromIndex("replaced");
-  return inputGraph;
+  data.removeLinksFromIndex("replaced");
 };

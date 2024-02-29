@@ -246,6 +246,18 @@ export const energyData = {
       ],
     },
     {
+      source: "STG_CHG_Battery",
+      target: "STG_CHG_Battery",
+      energyCarrier: "Electricity",
+      values: [
+        7686.116992007161, 8835.394975540792, 11041.878212134376,
+        19270.665018843607, 32536.6483577375, 30026.453552496645,
+        38789.09768137419, 37782.369904978266, 18390.426771497972,
+        10321.195364229077, 5233.292779390877, 5107.305940450134,
+        10321.8455506837,
+      ],
+    },
+    {
       source: "STG_DIS_Battery",
       target: "EC_Electricity",
       energyCarrier: "Electricity",

@@ -20,6 +20,10 @@ import { computeNodeBreadths } from "./compute/7_compute_node_breaths";
 import { resolveCollisionsAndRelax } from "./compute/8_resolve-collision";
 import { computeLinkBreadths } from "./compute/9_compute_link_breaths";
 import { computeLinkPaths } from "./path-data/compute_path";
+import { straigtenVirtualNodes } from "./virtual-nodes/straigthen-virtual-nodes";
+import { sortLinks } from "./compute/10_sort_links";
+import { fillHeight } from "./compute/11_fill_chart";
+import { addVirtualPathDatas } from "./virtual-nodes/add-virtual-path-data";
 
 /** Inspired on https://observablehq.com/@tomshanley/sankey-circular-deconstructed */
 
@@ -72,12 +76,15 @@ class GraphSetup<NODE_TYPE extends Node = Node, LINK_TYPE extends Link = Link>
     computeNodeValues(this.graph);
     computeNodeDepths(this);
     // optional depending on the config
-    createVirtualNodes(this.graph, this);
+    createVirtualNodes(this);
     adjustSankeySize(this);
     computeNodeBreadths(this);
     resolveCollisionsAndRelax(this);
     computeLinkBreadths(this.graph);
-    // straigtenVirtualNodes(this.graph, this);
+    straigtenVirtualNodes(this);
+    sortLinks(this);
+    fillHeight(this);
+    addVirtualPathDatas(this);
 
     computeLinkPaths(this);
 

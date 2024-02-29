@@ -40,12 +40,9 @@ const calculateNodeSize = (
     // node.y1 = node.y0 + node.value * graph.ky;
     // } else {
     node.y0 = (extend.y1 - extend.y0) / 2 - nodesLength / 2 + i;
-    console.log("1.", node.name, extend, nodesLength, i, node.y0);
     node.y1 = node.y0 + node.value * extend.ky;
     // }
   }
-
-  node.height = node.y1 - node.y0;
 };
 
 const sortNodes = (a: Node, b: Node, data: GraphData) => {

@@ -141,7 +141,6 @@ export const adjustSankeySize = (graph: Readonly<Graph<any, any>>) => {
   } else {
     data.setExtendValue("py", sankey.nodePadding);
   }
-  console.log(columns, py, sankey);
   data.setExtendValue("ky", getKy(columns, py, sankey));
 
   const margin = calculateMargin(data, graph);

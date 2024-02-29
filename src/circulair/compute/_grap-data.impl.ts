@@ -10,7 +10,6 @@ export class GraphDataImpl implements GraphData {
   private readonly nodeMap: Map<string, Node> = new Map();
   private linkIds: string[] = [];
   private readonly linkMap: Map<string, Link> = new Map();
-  readonly replacedLinks: any[] = [];
   public readonly extend: GraphExtend;
   constructor(extend: Pick<GraphExtend, "x0" | "x1" | "y1" | "y0">) {
     this.extend = { ...extend, ky: 0, py: extend.y0 };
@@ -52,6 +51,14 @@ export class GraphDataImpl implements GraphData {
 
   getNodeLinks(link: Link) {
     return getNodeLinks(link, this.nodeMap);
+  }
+
+  getNodeSourceLinks(node: Node): Link[] {
+    return this.filterLinks((link) => link.source === node._id);
+  }
+
+  getNodeTargetLinks(node: Node): Link[] {
+    return this.filterLinks((link) => link.target === node._id);
   }
 
   getTargetLinks(node: Node) {
@@ -104,6 +111,7 @@ export class GraphDataImpl implements GraphData {
   getNodes() {
     return this.nodeIds.map((l) => this.getNode(l));
   }
+
   removeLinksFromIndex(type: string): void {
     this.linkIds = this.linkIds.filter((id) => {
       return this.getLink(id).type !== type;
@@ -133,6 +141,15 @@ export class GraphDataImpl implements GraphData {
     return this.getLinks().filter(predicate);
   }
 
+  get replacedLinks(): Link[] {
+    const replaced: Link[] = [];
+    for (const link of this.linkMap.values()) {
+      if (link.type === "replaced") replaced.push(link);
+    }
+
+    return replaced;
+  }
+
   sameColumnLinks(
     getNode: (link: Link) => Node,
     column: number,
@@ -141,6 +158,12 @@ export class GraphDataImpl implements GraphData {
     return this.filterLinks((l) => {
       const t = getNode(l);
       return t.column == column && l.circularLinkType == circularLinkType;
+    });
+  }
+
+  removeVirtualNodesFromIndex(): void {
+    this.nodeIds = this.nodeIds.filter((nodeId) => {
+      return !this.getNode(nodeId).virtual;
     });
   }
 }
