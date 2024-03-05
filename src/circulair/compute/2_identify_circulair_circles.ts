@@ -1,6 +1,6 @@
 // Populate the sourceLinks and targetLinks for each node.
 
-import { Graph, GraphData } from "../model";
+import { Graph } from "../model";
 
 import findCircuits from "elementary-circuits-directed-graph";
 

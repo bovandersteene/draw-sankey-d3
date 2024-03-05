@@ -8,9 +8,11 @@ type SVG = d3.Selection<SVGSVGElement, undefined, null, undefined>;
 export const drawLinks = <NODE_TYPE extends Node, LINK_TYPE extends Link>(
   graphSetup: Graph<NODE_TYPE, LINK_TYPE>,
   g: G_EL,
-  svg: SVG
+  svg: SVG,
+  width?: (l: LINK_TYPE) => number | number
 ) => {
-  const links = graphSetup.graph.getLinks();
+  const { linkColor } = graphSetup;
+  const links = graphSetup.graph.filterLinks((d) => !!d.path);
   const linkG = g
     .append("g")
     .attr("class", "links")
@@ -19,50 +21,46 @@ export const drawLinks = <NODE_TYPE extends Node, LINK_TYPE extends Link>(
     .selectAll("path");
 
   const link = linkG.data(links).enter().append("g");
+  const widthFn = width ?? (() => 5);
+
+  svg
+    .append("defs")
+    .append("marker")
+    .attr("id", "arrow")
+    .attr("viewBox", "0 0 5 5")
+    .attr("refX", 10)
+    .attr("refY", 5)
+    .attr("markerWidth", 2)
+    .attr("markerHeight", 2)
+    .attr("orient", "auto-start-reverse")
+    .append("path")
+    .attr("d", "M 0 0 L 10 5 L 0 10 z")
+    .attr("fill", "context-fill");
 
   link
-    .filter((d) => d.path)
     .append("path")
     .attr("class", "sankey-link")
-    .attr("d", function (link) {
-      return link.path;
-    })
-    .style("stroke-width", function (d) {
-      return Math.max(1, d.width);
-    })
+    .attr("d", (link) => link.path)
+    .style("stroke-width", widthFn)
     .style("opacity", opacity.normal)
-    .style("stroke", function (link, i) {
-      if (link.circular) {
-        return "red";
-      } else if (link.type === "virtual") {
-        return "yellow";
-      } else if (link.type === "replaced") {
-        return "blue";
-      } else {
-        return "black";
-      }
-      // return link.circular ? "red" : "black";
-    })
+    .style("stroke", linkColor)
     .attr("id", (d) => d._id)
     .on("mouseover", mouseOver(svg, graphSetup.graph))
     .on("mouseout", mouseOut(svg));
+  //.attr("marker-end", "url(#arrow)");
 
   link.append("title").text(function (d) {
     const { source, target } = graphSetup.graph.getNodeLinks(d);
     return source.name + " → " + target.name + "\n Index: " + d.index;
   });
 
-  //   if (arrow && arrow.draw) {
-  //     drawArrows(arrow, linkG, graph.getLinks());
-  //   }
+  return { linkG, links };
 };
 
 export const mouseOver = (svg: SVG, graph: GraphData) => {
   return (d) => {
     const _id = d.srcElement.id;
     const link = graph.getLink(_id);
-    console.log(_id);
-
     svg.selectAll("rect").style("opacity", highlightNodes(link, graph));
 
     svg.selectAll(".sankey-link").style("opacity", (l: Link) => {

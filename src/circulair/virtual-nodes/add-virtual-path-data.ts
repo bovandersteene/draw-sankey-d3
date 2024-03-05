@@ -1,6 +1,5 @@
 import * as d3 from "d3";
-import { clone } from "lodash";
-import { Graph, GraphData } from "../model";
+import { Graph } from "../model";
 
 export const addVirtualPathDatas = ({
   graph: data,
@@ -9,8 +8,6 @@ export const addVirtualPathDatas = ({
   if (!useVirtualRoutes) return;
   const virtualLinkType: string = "both";
 
-  const virtualLinks = [];
-  const virtualNodes = [];
   const replacedLinks = data.replacedLinks;
 
   replacedLinks.forEach((replacedLink) => {
@@ -114,6 +111,6 @@ export const addVirtualPathDatas = ({
     data.addLink(replacedLink);
   });
 
-    data.removeLinksFromIndex("virtual");
-    data.removeVirtualNodesFromIndex();;
+  data.removeLinksFromIndex("virtual");
+  data.removeVirtualNodesFromIndex();
 };

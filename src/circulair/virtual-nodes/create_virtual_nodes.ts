@@ -6,7 +6,8 @@ const createReplacedLinks = (
   targetNode: Node,
   sourceNode: Node,
   virtualNodeIndex: number,
-  virtualLinkIndex: number
+  virtualLinkIndex: number,
+  value: number | null
 ) => {
   link.type = "replaced";
 
@@ -23,7 +24,7 @@ const createReplacedLinks = (
     // newNode.sourceLinks = [];
     // newNode.targetLinks = [];
     newNode.partOfCycle = false;
-    newNode.value = link.value;
+    newNode.value = value ?? link.value;
     newNode.depth = sourceNode.depth + (n + 1);
     newNode.height = sourceNode.height - (n + 1);
     newNode.column = sourceNode.column + (n + 1);
@@ -36,7 +37,7 @@ const createReplacedLinks = (
     newLink.source = n == 0 ? sourceNode._id : "virtualNode" + vMinus1;
     //   newLink.sourceIndex =
     newLink.target = newNode._id;
-    newLink.value = link.value;
+    newLink.value = value ?? link.value;
     newLink.index = "virtualLink" + virtualLinkIndex;
     virtualLinkIndex = virtualLinkIndex + 1;
     newLink.circular = false;
@@ -49,7 +50,7 @@ const createReplacedLinks = (
   lastLink.source = "virtualNode" + virtualNodeIndex;
   lastLink.target = targetNode._id;
 
-  lastLink.value = link.value;
+  lastLink.value = value ?? link.value;
   lastLink.index = "virtualLink" + virtualLinkIndex;
   virtualLinkIndex = virtualLinkIndex + 1;
   lastLink.circular = false;
@@ -61,7 +62,10 @@ const createReplacedLinks = (
   return { virtualLinkIndex, virtualNodeIndex };
 };
 
-export const createVirtualNodes = (graph: Readonly<Graph<any, any>>) => {
+export const createVirtualNodes = (
+  graph: Readonly<Graph<any, any>>,
+  value: number | null = null
+) => {
   const { useVirtualRoutes, graph: data } = graph;
 
   if (useVirtualRoutes) {
@@ -85,7 +89,8 @@ export const createVirtualNodes = (graph: Readonly<Graph<any, any>>) => {
           targetNode,
           sourceNode,
           virtualNodeIndex,
-          virtualLinkIndex
+          virtualLinkIndex,
+          value
         );
 
         virtualLinkIndex = replaced.virtualLinkIndex;

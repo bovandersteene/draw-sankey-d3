@@ -1,6 +1,6 @@
 // Move any nodes that overlap links which span 2+ columns
 function resolveNodeLinkOverlaps(inputGraph) {
-  let graph = clone(inputGraph);
+  const graph = clone(inputGraph);
   /*
   graph.links.forEach(function(link) {
     if (link.circular) {

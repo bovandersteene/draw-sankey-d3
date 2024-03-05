@@ -1,4 +1,4 @@
-import { Graph, GraphData } from "../model";
+import { Graph } from "../model";
 import { linkPerpendicularYToLinkSource, sameInclines } from "./utils";
 
 // sort and set the links' y1 for each node

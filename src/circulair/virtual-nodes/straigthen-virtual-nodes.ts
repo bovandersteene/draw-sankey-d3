@@ -1,4 +1,4 @@
-import { GraphData, Graph } from "../model";
+import { Graph } from "../model";
 
 export function straigtenVirtualNodes(graph: Readonly<Graph<any, any>>) {
   const { useVirtualRoutes, graph: data } = graph;
@@ -6,7 +6,6 @@ export function straigtenVirtualNodes(graph: Readonly<Graph<any, any>>) {
 
   data.forEachNode((node) => {
     if (node.virtual) {
-      const nodeHeight = node.y1 - node.y0;
       let dy = 0;
 
       const sourceLinks = data.getSourceLinks(node);

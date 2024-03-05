@@ -24,3 +24,21 @@ export const computeNodeValues = (inputGraph: GraphData) => {
 
   return inputGraph;
 };
+
+export const setNodeValue = (inputGraph: GraphData, value: number) => {
+  inputGraph.forEachNode((node: Node) => {
+    const sourceLinks = inputGraph.getSourceLinks(node);
+    const targetLinks = inputGraph.getTargetLinks(node);
+
+    let findCirculair = sourceLinks.find((l) => l.circular);
+    if (!findCirculair) {
+      findCirculair = targetLinks.find((l) => l.circular);
+    }
+
+    node.value = value;
+    node.partOfCycle = !!findCirculair;
+    node.circularLinkType = findCirculair?.circularLinkType;
+  });
+
+  return inputGraph;
+};

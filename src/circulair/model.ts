@@ -87,7 +87,12 @@ export type SankeyParams = {
 };
 
 export type CircularLinkType = "top" | "bottom";
-
+export type OrthogonalPathData = {
+  x: number;
+  y: number;
+  height: number;
+  index: number;
+};
 export type Link = {
   // internal link id
   _id: string;
@@ -106,6 +111,10 @@ export type Link = {
   index: number;
   circularLinkID?: number;
   circularPathData?: any;
+  orthogonalPathData?: {
+    source: OrthogonalPathData;
+    target: OrthogonalPathData;
+  };
   path: string | null;
   parentLink?: NodeIndex;
 };
@@ -134,6 +143,8 @@ export type Node = {
   virtual?: boolean;
   // Replaced link index
   replacedLink?: NodeIndex;
+  hasTarget: boolean;
+  hasSource: boolean;
 };
 
 export type Graph<
@@ -145,6 +156,8 @@ export type Graph<
   height: number;
   graph: GraphData<NODE_TYPE, LINK_TYPE>;
   nodeColor: (d: NODE_TYPE) => string;
+  linkColor: (d: LINK_TYPE) => string;
+  nodeText: (d: NODE_TYPE) => string;
   getNodeID: (d: any) => string;
   sortNodes: ((d: NODE_TYPE) => any) | null;
   setNodePositions?: boolean;
@@ -159,9 +172,21 @@ export const DefaultGraph: Graph<any, Link> = {
   height: 500,
   graph: undefined,
   useVirtualRoutes: true,
+  linkColor: (link) => {
+    if (link.circular) {
+      return "red";
+    } else if (link.type === "virtual") {
+      return "yellow";
+    } else if (link.type === "replaced") {
+      return "blue";
+    } else {
+      return "black";
+    }
+  },
   nodeColor: (d: any, index) => {
     return d3.scaleSequential(d3.interpolateCool).domain([0, 1000])(d.x0);
   },
+  nodeText: (d) => d.name,
   getNodeID: (d: any) => d.name,
   sortNodes: null,
   sankey: {
@@ -177,7 +202,7 @@ export const DefaultGraph: Graph<any, Link> = {
     baseRadius: 10,
     nodeWidth: 10,
     scale: 0.3,
-    iterations: 10,
+    iterations: 15,
     minNodePadding: 7,
     virtualNodePadding: 3,
     circularLinkGap: 5,

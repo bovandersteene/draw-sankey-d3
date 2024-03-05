@@ -38,6 +38,9 @@ export class GraphDataImpl implements GraphData {
     this.linkMap.set(_id, link);
     this.linkIds.push(_id);
 
+    this.getNode(link.target).hasSource = true;
+    this.getNode(link.source).hasTarget = true;
+
     return this;
   }
 

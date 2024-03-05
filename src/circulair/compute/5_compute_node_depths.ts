@@ -80,6 +80,12 @@ export const computeNodeDepths = (graph: Readonly<Graph<any, any>>) => {
     "height"
   );
 
+  // Align end nodes to the end of the graph
+  data.forEachNode((node) => {
+    if (!node.hasTarget) node.depth = maxDepth;
+  });
+
+
   // assign column numbers, and get max value
   data.forEachNode((node: Node) => {
     const column = sortNodes === null ? align(node, node.depth) : node.column;
