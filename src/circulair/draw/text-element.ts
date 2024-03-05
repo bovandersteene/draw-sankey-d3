@@ -1,4 +1,5 @@
 import * as d3 from "d3";
+import { update } from "lodash";
 
 type TYPE = {
   x0: number;
@@ -74,19 +75,32 @@ export type TextProps<T extends TYPE> = Props<T>;
 export const createTextElement = <T extends TYPE>(
   node: SVG<T>,
   getText: (d: T) => string,
-  { width, x, y, anchor, wordBreak }: Props<T>
+  props: Props<T>
 ) => {
+  const { width, x, y, anchor, wordBreak } = props;
   const dy = y ?? ((d) => d.y0);
   const dx = x ?? ((d) => d.x0);
 
   const text = node
     .append("text")
-    .attr("x", dx)
-    .attr("y", dy)
     .attr("dy", "0.35em")
     .attr("text-anchor", anchor ?? "middle")
     .attr("opacity", 1)
     .text(getText);
+
+  updateText(text, getText, props);
+
+  return { text };
+};
+
+export const updateText = <T extends TYPE>(
+  text,
+  getText: (d: T) => string,
+  { x, y, wordBreak, width }: Props<T>
+) => {
+  const dy = y ?? ((d) => d.y0);
+  const dx = x ?? ((d) => d.x0);
+  text.attr("x", dx).attr("y", dy);
 
   if (wordBreak) {
     text.each(function (t) {
@@ -96,5 +110,4 @@ export const createTextElement = <T extends TYPE>(
     // TODO put it in the middle
     text.attr("y", (d) => d.y0);
   }
-  return;
 };

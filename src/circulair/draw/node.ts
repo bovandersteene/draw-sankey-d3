@@ -3,6 +3,7 @@ import { nodeHeight, nodeWidth } from "../utils/node";
 import { mouseOut } from "./const";
 import * as d3 from "d3";
 import { TextProps, createTextElement } from "./text-element";
+import { pick } from "lodash";
 
 type G_EL = d3.Selection<SVGGElement, undefined, null, undefined>;
 type SVG = d3.Selection<SVGSVGElement, undefined, null, undefined>;
@@ -11,22 +12,19 @@ export const drawNodes = <NODE_TYPE extends Node, LINK_TYPE extends Link>(
   graphSetup: Graph<NODE_TYPE, LINK_TYPE>,
   g: G_EL,
   svg: SVG,
-  update: () => void,
+  update: (node: Node) => void,
   textProps: TextProps<any>
 ) => {
-  const { nodeText } = graphSetup;
-  const { node, nodeG } = drawNode(graphSetup, g, svg, () => update());
+  const { node, nodeG, nodeData } = drawNode(graphSetup, g, svg, update);
 
-  createTextElement(node, nodeText, textProps);
-
-  return { node, nodeG };
+  return { node, nodeG, nodeData };
 };
 
 export const drawNode = <NODE_TYPE extends Node, LINK_TYPE extends Link>(
   graphSetup: Graph<NODE_TYPE, LINK_TYPE>,
   g: G_EL,
   svg: SVG,
-  dragEvent: () => void
+  dragEvent: (node: Node) => void
 ) => {
   const nodes = graphSetup.graph.getNodes();
   const { graph, nodeColor, nodeText } = graphSetup;
@@ -39,34 +37,28 @@ export const drawNode = <NODE_TYPE extends Node, LINK_TYPE extends Link>(
     .selectAll("g");
   const dragHandler = d3
     .drag()
-    .on("start", dragStarted)
-    .on("drag", dragged)
-    .on("end", dragEnded);
+    .on("start", dragNode)
+    .on("drag", dragNode)
+    .on("end", dragNode);
 
-  function dragStarted(event, d) {
-    console.log(event);
-  }
-
-  function dragged(event, d) {
+  function dragNode(event, d) {
     d3.select(this)
       .attr("cx", event.x)
       .attr("cy", event.y)
       .attr("x", event.x)
       .attr("y", event.y);
-  }
-
-  function dragEnded(event, d) {
     const height = nodeHeight(d);
     const width = nodeWidth(d);
     d.x0 = event.x;
     d.y0 = event.y;
     d.x1 = d.x0 + width;
-    d.y0 = d.y0 + width;
-    console.log(event);
-    dragEvent();
+    d.y1 = d.y0 + height;
+    dragEvent(d as Node);
   }
 
-  const node = nodeG.data(nodes).enter().append("g");
+  const nodeData = nodeG.data(nodes);
+
+  const node = nodeData.enter().append("g");
 
   const nodeRect = node
     .append("rect")
@@ -87,7 +79,7 @@ export const drawNode = <NODE_TYPE extends Node, LINK_TYPE extends Link>(
 
   dragHandler(nodeRect);
 
-  return { nodeG, node };
+  return { nodeG, node, nodeData };
 };
 
 export const mouseOverNode = (nodes: any, svg: SVG, graph: GraphData) => {

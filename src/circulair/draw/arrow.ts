@@ -25,9 +25,8 @@ export const drawArrow = <NODE_TYPE extends Node, LINK_TYPE extends Link>(
 ) => {
   const { linkColor } = graphSetup;
 
-  return linkG
-    .data(links)
-    .enter()
+  const arrowsData = linkG.data(links).enter();
+  const arrows = arrowsData
     .append("g")
     .attr("class", "links-arrow")
     .append("path")
@@ -36,7 +35,14 @@ export const drawArrow = <NODE_TYPE extends Node, LINK_TYPE extends Link>(
     .style("opacity", opacity.normal)
     .style("fill", linkColor)
     .style("stroke", linkColor);
+
+  return { arrows, arrowsData };
 };
+
+export const updateArrow = (arrow) => {
+  arrow.attr("d", (d) => arrowPath(d.orthogonalPathData!.target));
+};
+
 export const drawArrowInPath = (
   thisPath: any,
   parentG: any,
@@ -135,4 +141,6 @@ export const drawArrows = <NODE_TYPE extends Node, LINK_TYPE extends Link>(
       arrowHeadSize
     );
   });
+
+  return { arrows };
 };

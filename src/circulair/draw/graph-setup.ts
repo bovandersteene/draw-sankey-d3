@@ -1,3 +1,4 @@
+import { pick } from "lodash";
 import {
   computeNodeLinksInitial,
   identifyCircles,
@@ -23,7 +24,10 @@ import {
   Link,
   Node,
 } from "../model";
-import { computeOrthogonalPaths } from "../path-data/compute_orthogonal_paths";
+import {
+  computeNodePath,
+  computeOrthogonalPaths,
+} from "../path-data/compute_orthogonal_paths";
 import { computeLinkPaths } from "../path-data/compute_path";
 import { addVirtualPathDatas } from "../virtual-nodes/add-virtual-path-data";
 import { createVirtualNodes } from "../virtual-nodes/create_virtual_nodes";
@@ -123,12 +127,12 @@ export class GraphSetup<
     return this;
   }
 
-  dragEhub() {
-    console.log("ehub");
-    computeOrthogonalPaths(this);
+  dragEhub(node: Node) {
+    computeNodePath(node, this);
   }
 
-  dragSankey() {
-    console.log("sanjkey");
+  dragSankey(node: Node) {
+    // addVirtualPathDatas(this);
+    computeLinkPaths(this);
   }
 }

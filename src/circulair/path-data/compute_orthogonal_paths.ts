@@ -1,6 +1,7 @@
 import { Graph, GraphData, Link, Node, OrthogonalPathData } from "../model";
 import { calcVerticalBuffer } from "./compute-circulair-path-data";
 import { nodeHeight } from "../utils/node";
+import { pick } from "lodash";
 const computeCircularPath = (
   link: Readonly<Link>,
   { x: sx, y: sy, height: sh }: OrthogonalPathData,
@@ -102,6 +103,26 @@ const sortLinks = (node: Node, data: GraphData<Node, Link>) => {
   sortLinks_(sourceLinks, "source", "target");
 };
 
+const createPath = (link: Link) => {
+  const { orthogonalPathData } = link;
+
+  if (!orthogonalPathData) {
+    console.log("no path data");
+  } else if (link.circular) {
+    link.path = computeCircularPath(
+      link,
+      orthogonalPathData.source,
+      orthogonalPathData.target
+    );
+  } else {
+    link.path = computeNormalPath(
+      link,
+      orthogonalPathData.source,
+      orthogonalPathData.target
+    );
+  }
+};
+
 export const computeOrthogonalPaths = (graph: Graph<any, any>) => {
   const { graph: data } = graph;
 
@@ -117,23 +138,14 @@ export const computeOrthogonalPaths = (graph: Graph<any, any>) => {
   data.forEachNode((node) => computePathData(node, data));
   data.forEachNode((node) => sortLinks(node, data));
 
-  data.forEachLink((link: Link) => {
-    const { orthogonalPathData } = link;
+  data.forEachLink(createPath);
+};
 
-    if (!orthogonalPathData) {
-      console.log("no path data");
-    } else if (link.circular) {
-      link.path = computeCircularPath(
-        link,
-        orthogonalPathData.source,
-        orthogonalPathData.target
-      );
-    } else {
-      link.path = computeNormalPath(
-        link,
-        orthogonalPathData.source,
-        orthogonalPathData.target
-      );
-    }
-  });
+export const computeNodePath = (node: Node, graph: Graph<any, any>) => {
+  const { graph: data } = graph;
+  computePathData(node, data);
+  sortLinks(node, data);
+
+  data.getTargetLinks(node).forEach(createPath);
+  data.getSourceLinks(node).forEach(createPath);
 };

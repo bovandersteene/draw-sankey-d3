@@ -20,24 +20,12 @@ export const drawLinks = <NODE_TYPE extends Node, LINK_TYPE extends Link>(
     .attr("stroke-opacity", 0.2)
     .selectAll("path");
 
-  const link = linkG.data(links).enter().append("g");
+  const linkData = linkG.data(links);
+
+  const link = linkData.enter().append("g");
   const widthFn = width ?? (() => 5);
 
-  svg
-    .append("defs")
-    .append("marker")
-    .attr("id", "arrow")
-    .attr("viewBox", "0 0 5 5")
-    .attr("refX", 10)
-    .attr("refY", 5)
-    .attr("markerWidth", 2)
-    .attr("markerHeight", 2)
-    .attr("orient", "auto-start-reverse")
-    .append("path")
-    .attr("d", "M 0 0 L 10 5 L 0 10 z")
-    .attr("fill", "context-fill");
-
-  link
+  const linkPaths = link
     .append("path")
     .attr("class", "sankey-link")
     .attr("d", (link) => link.path)
@@ -54,7 +42,16 @@ export const drawLinks = <NODE_TYPE extends Node, LINK_TYPE extends Link>(
     return source.name + " → " + target.name + "\n Index: " + d.index;
   });
 
-  return { linkG, links };
+  return { linkG, links, linkData, link, linkPaths };
+};
+
+export const updateLink = <NODE_TYPE extends Node, LINK_TYPE extends Link>(
+  graphSetup: Graph<NODE_TYPE, LINK_TYPE>,
+  linkData,
+  linkPaths
+) => {
+  linkData.data(graphSetup.graph.filterLinks((d) => !!d.path));
+  linkPaths.attr("d", (l) => l.path);
 };
 
 export const mouseOver = (svg: SVG, graph: GraphData) => {

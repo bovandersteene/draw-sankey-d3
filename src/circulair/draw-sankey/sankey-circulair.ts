@@ -1,12 +1,12 @@
 /** Inspired on https://observablehq.com/@tomshanley/sankey-circular-deconstructed */
 
-import { drawArrows } from "../draw/arrow";
+import { drawArrows, updateArrow } from "../draw/arrow";
 import { Setup, GraphSetup } from "../draw/graph-setup";
-import { drawLinks } from "../draw/link";
+import { drawLinks, updateLink } from "../draw/link";
 import { SankeyData, Link, Node } from "../model";
 import * as d3 from "d3";
-import { drawNodes } from "../draw/node";
-import { TextProps } from "../draw/text-element";
+import { drawNode, drawNodes } from "../draw/node";
+import { TextProps, createTextElement, updateText } from "../draw/text-element";
 
 export const drawSankeyCirculair = <
   DATA extends SankeyData,
@@ -43,24 +43,24 @@ export const drawSankeyCirculair = <
     },
   };
 
-  const { nodeG, nodes } = drawNodes(
+  const { nodeText } = graphSetup;
+  const { node } = drawNode(graphSetup, g, svg, (node: Node) =>
+    updateDrawing(node)
+  );
+  const { text } = createTextElement(node, nodeText, textProps);
+  const { linkG, links, linkData, linkPaths } = drawLinks(
     graphSetup,
     g,
     svg,
-    () => updateDrawing(),
-    textProps
+    (d) => Math.max(1, d.width)
   );
+  const { arrows } = drawArrows(graphSetup, links, linkG);
 
-  const { linkG, links } = drawLinks(graphSetup, g, svg, (d) =>
-    Math.max(1, d.width)
-  );
-  drawArrows(graphSetup, links, linkG);
-
-  const updateDrawing = () => {
-    console.log("change the data");
-    graphSetup.dragSankey();
-    nodeG.data(data.nodes);
-    linkG.data(links);
+  const updateDrawing = (node: Node) => {
+    if (node) graphSetup.dragSankey(node);
+    updateLink(graphSetup, linkData, linkPaths);
+    updateText(text, nodeText, textProps);
+    // updateArrow(arrows);
   };
   document.getElementById(documentId)?.appendChild(svg.node()!);
 
